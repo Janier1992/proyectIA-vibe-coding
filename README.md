@@ -15,18 +15,22 @@ proyectIA-vibe-coding/
 │   │   └── templates/
 │   │       ├── prp_base.md        # Plantilla genérica base
 │   │       ├── prp_frontend.md    # Plantilla optimizada para componentes visuales
-│   │       └── prp_backend_api.md # Plantilla optimizada para APIs y bases de datos
+│   │       ├── prp_backend_api.md # Plantilla optimizada para APIs y bases de datos
+│   │       └── prp_automatizacion.md # Plantilla para flujos n8n/integraciones
 │   ├── agents/                # Asistentes especializados
 │   │   ├── codebase-analyst.md
 │   │   ├── gestor-documentacion.md
 │   │   ├── validacion-calidad.md
-│   │   └── arquitecto-sistemas.md # Subagente para modelado de datos y arquitectura
+│   │   ├── arquitecto-sistemas.md # Subagente para modelado de datos y arquitectura
+│   │   ├── spec-writer.md, builder.md, approver.md # Fases Factory
+│   │   └── revisor-seguridad/ux/ui/codigo.md      # Revisores paralelos Factory
 │   ├── commands/              # Comandos personalizados (/primer, /bootstrap, etc.)
 │   └── skills/                # Habilidades estructuradas para el desarrollo
 ├── .agents/                   # Configuración de contexto para Gemini
 │   ├── AGENTS.md              # Reglas globales de codificación leídas por Gemini
 │   └── skills/                # Symlink a .claude/skills (fuente única)
 ├── PRPs/                      # PRPs generados con /generar-prp
+├── factory/                   # Artefactos de cada corrida de /factory
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
 ├── .windsurfrules             # Reglas para Cascade en Windsurf
@@ -45,6 +49,27 @@ Cuando vayas a iniciar un nuevo proyecto tecnológico asistido por Inteligencia 
 3. **Inicializa tu stack con un comando**: Escribe `/bootstrap nextjs`, `/bootstrap python` o `/bootstrap expo` para que la IA genere el andamiaje inicial del stack de forma automatizada.
 4. **Instala tus servidores MCP** preferidos utilizando la plantilla `example.mcp.json`. Por ejemplo, Playwright MCP te servirá para que el agente realice validaciones visuales del frontend.
 5. **¡Comienza a programar de la mano con tu IA!** Pídele a tu IA que use el comando `/primer` al comenzar una nueva conversación para que entienda rápidamente tu entorno de trabajo.
+
+---
+
+## 🏭 Metodología Factory: de la idea a producción
+
+`/factory [entrada]` ejecuta el pipeline completo para software y automatizaciones:
+
+```
+Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Approver → ¿Humano? → [Main | PR] → Producción
+```
+
+1. **Entrada**: clasifica (software, automatización o mixto) y crea la rama `factory/[feature]`.
+2. **Spec writer**: genera el PRP con criterios de aceptación y nivel de riesgo.
+3. **Builder**: implementa iterativamente y valida.
+4. **Revisión paralela**: cuatro revisores (seguridad, UX, UI, código) corren a la vez.
+5. **Approver**: consolida y decide `APROBADO_AUTO`, `REQUIERE_HUMANO` o `RECHAZADO`.
+6. **¿Humano?**: obligatoria con riesgo medio/alto o cambios sensibles.
+7. **Main o PR**: PR por defecto; `main` solo con orden explícita.
+8. **Producción**: checklist de despliegue y rollback; el despliegue lo confirma una persona.
+
+Los artefactos de cada corrida quedan en `factory/[feature]/`.
 
 ---
 

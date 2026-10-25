@@ -65,3 +65,9 @@ Para tareas complejas o nuevas funcionalidades, sigue de forma estricta el **Buc
 - **Siempre incluir fallbacks**: Las conexiones de red, llamadas de APIs externas e interacciones con bases de datos deben tener bloques `try/catch` o `try/except` con valores de respaldo o control de fallos graceful.
 - **Timeouts**: Define timeouts para todas las peticiones a servicios de terceros.
 - **Mensajes de error informativos**: Asegúrate de que los errores generen logs claros que incluyan el contexto de la llamada y un identificador visual (como emojis o tags) para facilitar la depuración a través de la terminal o visor de logs.
+
+---
+
+## 🏭 Metodología Factory
+
+Para desarrollos completos sigue el pipeline definido en `CLAUDE.md`: Entrada → Spec writer → Builder → revisión paralela (Seguridad, UX, UI, Código) → Approver → ¿Humano? → Main o PR → Producción. Guarda los artefactos en `factory/[feature]/`, abre PR por defecto, nunca hagas push directo a `main` ni despliegues sin confirmación humana.

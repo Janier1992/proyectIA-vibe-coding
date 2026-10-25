@@ -41,9 +41,35 @@ Para tareas complejas, se debe seguir estrictamente este flujo:
 
 ---
 
+## 🏭 Metodología Factory (Idea → Producción)
+
+Pipeline obligatorio para desarrollos de software y automatizaciones. Se ejecuta con `/factory [entrada]`:
+
+```
+Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Approver → ¿Humano? → [Main | PR] → Producción
+```
+
+| Fase | Responsable | Artefacto |
+|---|---|---|
+| Entrada | `/factory` (clasifica software / automatización / mixto) | `factory/[feature]/` |
+| Spec writer | agente `spec-writer` | `PRPs/[feature]-[fecha].md` |
+| Builder | agente `builder` | código + `build.md` |
+| Revisión paralela | `revisor-seguridad`, `revisor-ux`, `revisor-ui`, `revisor-codigo` | `review-*.md` |
+| Approver | agente `approver` | `decision.md` |
+| ¿Humano? | Persona: obligatoria si el riesgo es medio/alto o toca auth, pagos, datos personales, migraciones o infraestructura | aprobación explícita |
+| Main / PR | `/factory` | PR por defecto; `main` solo con orden explícita y riesgo bajo |
+| Producción | `/factory` + persona | `produccion.md` (checklist y rollback) |
+
+Reglas: nunca push directo a `main` por iniciativa propia, nunca desplegar sin confirmación humana, y un BLOQUEANTE de cualquier revisor devuelve el trabajo al Builder (máximo 3 iteraciones).
+
+---
+
 ## 🛠️ Comandos del Motor Agéntico (Claude Code Commands)
 
 Este kit contiene comandos agénticos listos para ser invocados en la línea de comandos de Claude Code o interpretados por otros agentes:
+
+### 0. Pipeline completo
+- `/factory [descripción | issue | archivo]` - Ejecuta `.claude/commands/factory.md`. Orquesta todas las fases de la metodología Factory, de la entrada a producción.
 
 ### 1. Inicialización de Contexto
 - `/primer` - Ejecuta `.claude/commands/primer.md`. Permite al asistente de IA leer los archivos clave y presentarte un resumen ejecutivo del stack tecnológico, estructura y objetivos de tu proyecto de forma inmediata.

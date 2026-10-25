@@ -26,4 +26,5 @@ For complex features or tasks:
 - **Always Reverse Engineer**: Analyze existing patterns in the codebase before writing new code.
 - **Generate a PRP**: Write a Product Requirement Proposal (PRP) based on the templates inside `.claude/PRPs/templates/` (`prp_base.md`, `prp_frontend.md`, or `prp_backend_api.md`).
 - **Iterative Execution**: Solve tasks sequentially, validating syntax and running tests at each step. Fix errors immediately at their root cause.
+- **Factory**: Para desarrollos completos usa el pipeline Idea → Producción definido en `CLAUDE.md` (`/factory`): spec, build, revisión paralela (seguridad, UX, UI, código), aprobación, compuerta humana y PR por defecto. Nunca push directo a `main` ni despliegue sin confirmación humana.
 - **Error-First**: Ensure all network calls and database queries have explicit error handling, timeouts, and fallback mock data.
