@@ -1,3 +1,8 @@
+---
+description: "Inicializa directorios git worktree paralelos para agentes Claude Code paralelos."
+argument-hint: "[nombre-caracteristica] [numero-worktrees]"
+---
+
 # Inicializar directorios git worktree paralelos para agentes Claude Code paralelos
 
 ## Variables

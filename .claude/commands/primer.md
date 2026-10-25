@@ -43,12 +43,13 @@ Busca y lee rápidamente:
 
 ### 4. **Entender el Stack Tecnológico**
 
-Identifica:
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind, Zustand
-- **Backend** (si aplica): FastAPI, SQLModel, PostgreSQL/Supabase
-- **Testing**: Jest, pytest, Playwright
-- **Styling**: Tailwind CSS, shadcn/ui (si se usa)
-- **State Management**: Zustand con persistencia
+Deduce el stack a partir de los manifiestos y configuración reales (no asumas uno). Identifica:
+- **Frontend**: framework, lenguaje y librerías de UI (si aplica)
+- **Backend**: framework, ORM y base de datos (si aplica)
+- **Testing**: frameworks y comandos de prueba
+- **Styling / Estado**: solo si el proyecto los usa
+
+Si el proyecto es solo el kit (sin código de aplicación), indícalo y sugiere `/bootstrap`.
 
 ### 5. **Reportar Resumen al Usuario**
 

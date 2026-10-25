@@ -25,7 +25,8 @@ proyectIA-vibe-coding/
 │   └── skills/                # Habilidades estructuradas para el desarrollo
 ├── .agents/                   # Configuración de contexto para Gemini
 │   ├── AGENTS.md              # Reglas globales de codificación leídas por Gemini
-│   └── skills/                # Habilidades estructuradas para Gemini
+│   └── skills/                # Symlink a .claude/skills (fuente única)
+├── PRPs/                      # PRPs generados con /generar-prp
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
 ├── .windsurfrules             # Reglas para Cascade en Windsurf

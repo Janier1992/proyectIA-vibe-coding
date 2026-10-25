@@ -1,3 +1,8 @@
+---
+description: "Lanza N subagentes en worktrees paralelos para implementar la misma característica y comparar resultados."
+argument-hint: "[nombre-caracteristica] [plan] [numero-worktrees]"
+---
+
 # Ejecución de Versión de Tareas Paralelas
 
 ## Variables

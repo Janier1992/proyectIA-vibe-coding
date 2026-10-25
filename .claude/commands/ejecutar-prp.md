@@ -1,3 +1,8 @@
+---
+description: "Implementa una característica leyendo un PRP y validando cada paso hasta completarlo."
+argument-hint: "[PRPs/nombre-prp.md]"
+---
+
 # Ejecutar PRP BASE
 
 Implementar una característica usando el archivo PRP.

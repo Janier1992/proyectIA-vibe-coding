@@ -1,3 +1,7 @@
+---
+description: "Explora la estructura, documentación y archivos clave de un proyecto para entender su contexto."
+---
+
 # Explorador de Proyecto
 
 Explora y entiende el contexto de un proyecto de software.

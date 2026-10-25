@@ -98,7 +98,7 @@ Si encuentras ambigüedades críticas, pregunta:
 
 ### 2.1 **Usar Template Base**
 
-Usa el template en `PRPs/templates/prp_base.md` como estructura base.
+Usa el template en `.claude/PRPs/templates/prp_base.md` (o `prp_frontend.md` / `prp_backend_api.md` según el caso) como estructura base.
 
 ### 2.2 **Contexto Crítico a Incluir**
 

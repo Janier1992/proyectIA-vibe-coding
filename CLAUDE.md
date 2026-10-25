@@ -34,7 +34,7 @@ Para tareas complejas, se debe seguir estrictamente este flujo:
 
 1. **Delimitar el Problema**: Definir con precisión el alcance, subproblemas y criterios de éxito (qué es 100% completo).
 2. **Ingeniería Inversa (Contexto)**: Analizar patrones existentes, dependencias lógicas, librerías oficiales y casos de borde.
-3. **Planificación Jerárquica (PRP)**: Crear una Propuesta de Requerimientos de Producto (PRP) usando la plantilla en `.claude/PRPs/templates/prp_base.md`.
+3. **Planificación Jerárquica (PRP)**: Crear una Propuesta de Requerimientos de Producto (PRP) usando la plantilla en `.claude/PRPs/templates/prp_base.md`. Los PRPs generados se guardan en `PRPs/`. Detalle de la metodología: `.claude/prompts/bucle-agentico.md`.
 4. **Ejecución Iterativa (0% -> 100%)**: Trabajar tarea por tarea de forma secuencial, testeando e implementando paso a paso.
 5. **Validación Continua**: Ejecutar lints, formateadores, y tests automáticos después de cada cambio significativo.
 6. **Reporte Final**: Reportar de forma clara las tareas completadas, resultados de tests, fallos corregidos y siguientes pasos.

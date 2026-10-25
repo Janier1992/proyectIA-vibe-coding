@@ -1,14 +1,12 @@
 #!/bin/bash
-# PostToolUse hook: Log all tool usage for tracking and debugging
-# This hook runs after any tool execution to maintain an audit log
+# PostToolUse hook: registra el nombre de cada herramienta usada (log de auditoría)
 
+input=$(cat)
 timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+toolName=$(echo "$input" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
 
-# Create logs directory if it doesn't exist
 mkdir -p .claude/logs
+echo "[$timestamp] Tool used: ${toolName:-unknown}" >> .claude/logs/tool-usage.log
 
-# Log the tool usage
-echo "[$timestamp] Claude made an edit " >> .claude/logs/tool-usage.log
-
-# Always return success to avoid blocking tools
+# Siempre retorna éxito para no bloquear herramientas
 echo "{}"

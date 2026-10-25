@@ -1,4 +1,8 @@
 ---
+description: "Analiza y arregla un issue de GitHub de punta a punta (análisis, fix, tests, commit y PR)."
+argument-hint: "[numero-o-url-del-issue]"
+---
+
 Por favor analiza y arregla el issue de GitHub: $ARGUMENTS.
 
 Sigue estos pasos:
@@ -13,4 +17,3 @@ Sigue estos pasos:
 8. Hace push y crea un PR
 
 Recuerda usar GitHub CLI (`gh`) para todas las tareas relacionadas con GitHub.
----
