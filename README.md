@@ -30,6 +30,8 @@ proyectIA-vibe-coding/
 │   ├── AGENTS.md              # Reglas globales de codificación leídas por Gemini
 │   └── skills/                # Symlink a .claude/skills (fuente única)
 ├── PRPs/                      # PRPs generados con /generar-prp
+├── apps/                      # Apps generadas por /factory
+│   └── calculadora-propinas/  # Ejemplo de corrida Factory
 ├── factory/                   # Artefactos de cada corrida de /factory
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
@@ -70,6 +72,15 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 8. **Producción**: checklist de despliegue y rollback; el despliegue lo confirma una persona.
 
 Los artefactos de cada corrida quedan en `factory/[feature]/`.
+
+Ejemplo: [`calculadora-propinas`](factory/calculadora-propinas/) (app en [`apps/calculadora-propinas/`](apps/calculadora-propinas/README.md)).
+
+### Lecciones de la primera corrida
+
+- El Approver rechazó la iteración 1 por 4 hallazgos CAMBIOS; la iteración 2 quedó `APROBADO_AUTO`.
+- Los revisores UX y UI detectaron el mismo defecto de contraste. Conviene que el spec-writer exija contraste >= 3:1 en los bordes de los controles.
+- `node --test <directorio>` falla en Node 22; usar `node --test <dir>/*.test.js`.
+- La verificación en navegador solo es posible si Playwright está disponible.
 
 ---
 
