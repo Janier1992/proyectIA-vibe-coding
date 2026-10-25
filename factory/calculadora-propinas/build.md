@@ -36,3 +36,19 @@ Verificacion visual en navegador real: 375/768/1440px, ambos temas, solo teclado
 - Sin tests de DOM/E2E (fuera de alcance por PRP).
 - Mensajes de error con limites (1.000.000, 100) duplicados como texto respecto a las constantes MAX_*.
 - Blur sobre campo vacio sin tocar marca el campo como "tocado" y muestra error al tabular; aceptado por "aparecen tras input/blur".
+
+## Iteracion 2
+
+Hallazgos obligatorios (decision.md):
+1. Contraste: nuevo token `--control-border` (claro `hsl(220 15% 45%)`, oscuro `hsl(225 15% 58%)`) usado en input, chip y boton secundario; `--border` se mantiene en la tarjeta y el divisor. Ratios calculados con script (formula WCAG, sin Playwright): claro 5.20:1 sobre `--surface` y 4.48:1 sobre `--surface-alt`; oscuro 4.88:1 y 4.19:1. Todos >= 3:1. Error (`--danger`) y foco (outline 3px) siguen distinguibles.
+2. Texto guia: `ui.js` muestra "Ingresa el monto de la cuenta para ver el resultado" si el monto es invalido/vacio y "Corrige los campos marcados para ver el resultado" si el monto es valido y falla otro campo (solo textContent).
+3. Errores anunciados: los tres `<p class="error">` llevan `aria-live="polite"` y ya no usan `hidden`; permanecen en el DOM y solo cambia su texto (vacio = sin anuncio). CSS `.error:empty` colapsa el hueco y oculta el icono.
+4. Tildes: "Porcentajes rápidos", "Número de personas", mensaje "número entero" en calculator.js. Ningun test comparaba el texto; se agrego uno que lo verifica.
+
+Opcionales aplicados: grid de 4 columnas en atajos; "Limpiar" con clase `.btn-secondary` (contorno, sin gradiente); `aria-pressed` en atajos (se sincroniza en cada render con el valor del campo, y el chip activo se rellena con `--primary`); tests de bill 0.004/0.005 y de `tipPerPerson`.
+
+PRP: comando de test corregido a `node --test apps/calculadora-propinas/*.test.js` en `PRPs/calculadora-propinas-2026-10-25.md` (3 lugares). `.claude/PRPs/templates/prp_frontend.md` no contiene comando de test; sin cambios.
+
+Validacion: `node --test apps/calculadora-propinas/*.test.js` 33/33; `node --check` ui.js y calculator.js OK; greps de sinks y `https?://` sin coincidencias; `wc -l` todos < 500 (max 182). Playwright/navegador no disponibles: contraste por calculo, verificacion visual sigue pendiente de humano.
+
+No hechos (fuera de alcance): opcionales 7 (DRY de mensajes) y 9 (touched solo si cambia el valor).

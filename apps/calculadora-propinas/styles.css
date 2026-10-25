@@ -8,6 +8,7 @@
   --primary: hsl(172 75% 25%);
   --primary-contrast: hsl(0 0% 100%);
   --border: hsl(220 18% 76%);
+  --control-border: hsl(220 15% 45%);
   --danger: hsl(0 70% 38%);
   --focus-ring: hsl(222 90% 45%);
   --radius: 0.875rem;
@@ -23,6 +24,7 @@
     --primary: hsl(172 60% 62%);
     --primary-contrast: hsl(225 40% 8%);
     --border: hsl(225 15% 34%);
+    --control-border: hsl(225 15% 58%);
     --danger: hsl(0 90% 76%);
     --focus-ring: hsl(210 100% 75%);
   }
@@ -70,7 +72,7 @@ input {
   font-size: 1rem;
   color: var(--text);
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 2px solid var(--control-border);
   border-radius: 0.6rem;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -91,10 +93,13 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 }
 
 .error::before { content: "\26A0\FE0E  "; }
+/* Vacio pero presente en el DOM para que el lector de pantalla anuncie los cambios. */
+.error:empty { margin-top: -0.4rem; }
+.error:empty::before { content: none; }
 
-.shortcuts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
 
-.chip, .btn-reset {
+.chip, .btn-secondary {
   min-height: 2.75rem;
   min-width: 2.75rem;
   padding: 0.5rem 1rem;
@@ -108,23 +113,20 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 .chip {
   color: var(--text);
   background: var(--surface-alt);
-  border: 2px solid var(--border);
+  border: 2px solid var(--control-border);
 }
 
 .chip:hover { border-color: var(--primary); }
-.chip:active, .btn-reset:active { transform: scale(0.97); }
+.chip[aria-pressed="true"] { color: var(--primary-contrast); background: var(--primary); border-color: var(--primary); }
+.chip:active, .btn-secondary:active { transform: scale(0.97); }
 
-.btn-reset {
-  color: var(--primary-contrast);
-  background: linear-gradient(135deg, var(--primary), hsl(200 70% 35%));
-  border: 2px solid transparent;
+.btn-secondary {
+  color: var(--text);
+  background: transparent;
+  border: 2px solid var(--control-border);
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn-reset { background: linear-gradient(135deg, var(--primary), hsl(200 70% 65%)); }
-}
-
-.btn-reset:hover { filter: brightness(1.08); }
+.btn-secondary:hover { border-color: var(--primary); background: var(--surface-alt); }
 
 .results { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
 

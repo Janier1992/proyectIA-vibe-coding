@@ -115,3 +115,19 @@ describe('validateInputs: limites exactos', () => {
     assert.equal(MAX_PEOPLE, 100);
   });
 });
+
+describe('casos adicionales', () => {
+  test('rechaza bill 0.004 (menos de 1 centavo) y acepta 0.005', () => {
+    const r = validateInputs({ ...ok, bill: 0.004 });
+    assert.equal(r.valid, false);
+    assert.ok(r.errors.bill);
+    assert.equal(validateInputs({ ...ok, bill: 0.005 }).valid, true);
+  });
+  test('tipPerPerson divide la propina entre las personas', () => {
+    const r = calculateTip({ bill: 200, tipPercent: 10, people: 4 });
+    assert.equal(r.tipPerPerson, 5);
+  });
+  test('mensaje de personas lleva tilde', () => {
+    assert.match(validateInputs({ ...ok, people: 2.5 }).errors.people, /número/);
+  });
+});

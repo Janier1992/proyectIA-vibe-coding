@@ -21,7 +21,7 @@
   const MESSAGES = Object.freeze({
     bill: 'Ingresa un monto mayor que 0 y hasta 1.000.000',
     tipPercent: 'Ingresa un porcentaje entre 0 y 100',
-    people: 'Ingresa un numero entero de personas entre 1 y 100',
+    people: 'Ingresa un número entero de personas entre 1 y 100',
   });
 
   /** Convierte texto a numero. Acepta coma o punto decimal; NaN si no es valido. */

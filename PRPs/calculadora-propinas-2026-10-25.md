@@ -57,7 +57,7 @@ Reglas de cálculo y redondeo:
 
 ## Success Criteria / Criterios de aceptación (verificables)
 Lógica (automatizable con `node --test`):
-- [ ] `node --test apps/calculadora-propinas/` termina con código 0 y 0 fallos.
+- [ ] `node --test apps/calculadora-propinas/*.test.js` termina con código 0 y 0 fallos.
 - [ ] Caso base: bill 100, tip 15, people 1 -> tipTotal 15.00, total 115.00, perPerson 115.00.
 - [ ] Caso dividido: bill 200, tip 10, people 4 -> tipTotal 20.00, total 220.00, perPerson 55.00.
 - [ ] Propina 0%: bill 50, tip 0, people 2 -> tipTotal 0, total 50, perPerson 25.
@@ -117,7 +117,7 @@ Task 1: Lógica pura
 Task 2: Tests unitarios
   CREATE: apps/calculadora-propinas/calculator.test.js
   CONTENT: casos de la sección Criterios de aceptación (lógica) con node:test + node:assert/strict.
-  VALIDATE: node --test apps/calculadora-propinas/ (0 fallos)
+  VALIDATE: node --test apps/calculadora-propinas/*.test.js (0 fallos)
 
 Task 3: Marcado
   CREATE: apps/calculadora-propinas/index.html
@@ -138,7 +138,7 @@ Task 6: Verificación final
 ## Comandos de validación
 ```bash
 # 1. Tests unitarios (requisito principal; Node 22)
-node --test apps/calculadora-propinas/
+node --test apps/calculadora-propinas/*.test.js
 
 # 2. Sintaxis de cada archivo JS
 node --check apps/calculadora-propinas/calculator.js

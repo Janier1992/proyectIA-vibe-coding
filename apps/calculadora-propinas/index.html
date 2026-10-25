@@ -17,28 +17,28 @@
       <div class="field">
         <label for="bill">Monto de la cuenta</label>
         <input id="bill" name="bill" type="text" inputmode="decimal" autocomplete="off" aria-describedby="bill-error">
-        <p id="bill-error" class="error" hidden></p>
+        <p id="bill-error" class="error" aria-live="polite"></p>
       </div>
 
       <div class="field">
         <label for="tipPercent">Propina (%)</label>
         <input id="tipPercent" name="tipPercent" type="text" inputmode="decimal" autocomplete="off" value="15" aria-describedby="tipPercent-error">
-        <p id="tipPercent-error" class="error" hidden></p>
-        <div class="shortcuts" role="group" aria-label="Porcentajes rapidos">
-          <button type="button" class="chip" data-tip="10">10%</button>
-          <button type="button" class="chip" data-tip="15">15%</button>
-          <button type="button" class="chip" data-tip="18">18%</button>
-          <button type="button" class="chip" data-tip="20">20%</button>
+        <p id="tipPercent-error" class="error" aria-live="polite"></p>
+        <div class="shortcuts" role="group" aria-label="Porcentajes rápidos">
+          <button type="button" class="chip" aria-pressed="false" data-tip="10">10%</button>
+          <button type="button" class="chip" aria-pressed="false" data-tip="15">15%</button>
+          <button type="button" class="chip" aria-pressed="false" data-tip="18">18%</button>
+          <button type="button" class="chip" aria-pressed="false" data-tip="20">20%</button>
         </div>
       </div>
 
       <div class="field">
-        <label for="people">Numero de personas</label>
+        <label for="people">Número de personas</label>
         <input id="people" name="people" type="text" inputmode="numeric" autocomplete="off" value="1" aria-describedby="people-error">
-        <p id="people-error" class="error" hidden></p>
+        <p id="people-error" class="error" aria-live="polite"></p>
       </div>
 
-      <button type="button" id="reset" class="btn-reset">Limpiar</button>
+      <button type="button" id="reset" class="btn-secondary">Limpiar</button>
     </form>
 
     <section class="results" aria-live="polite" aria-labelledby="results-title">
