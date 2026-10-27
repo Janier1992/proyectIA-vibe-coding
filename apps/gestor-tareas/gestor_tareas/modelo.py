@@ -10,11 +10,11 @@ PRIORIDADES = ("alta", "media", "baja")
 ESTADOS = ("pendiente", "hecha")
 
 
-class ErrorDeDominio(Exception):  # noqa: N818 - nombre fijado por el PRP
+class ErrorDeDominio(Exception):
     """Error de validación o de dominio (código de salida 1)."""
 
 
-class ErrorDeAlmacen(Exception):  # noqa: N818 - nombre fijado por el PRP
+class ErrorDeAlmacen(Exception):
     """Error de almacenamiento (código de salida 3)."""
 
 

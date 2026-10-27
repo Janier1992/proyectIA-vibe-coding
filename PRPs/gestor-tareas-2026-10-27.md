@@ -60,12 +60,12 @@ Límites del motor: archivos <= 500 líneas, funciones <= 50 líneas, una respon
 
 ## Especificación de la CLI
 
-Invocación: `python -m gestor_tareas [--archivo RUTA] <comando> [args]` ejecutado desde `apps/gestor-tareas/`. `--archivo` es opción global y va **antes** del subcomando (documentarlo en `--help`).
+Invocación: `python -m gestor_tareas [--archivo RUTA] <comando> [args]` ejecutado desde `apps/gestor-tareas/`. `--archivo` es opción global y puede ir **antes o después** del subcomando (documentarlo en `--help`); si se da en ambos sitios gana el de después; la precedencia `--archivo` > entorno > defecto no cambia.
 
 | Comando | Sintaxis | Comportamiento | Salida en stdout (éxito) |
 |---|---|---|---|
 | `add` | `add TEXTO [--prioridad alta\|media\|baja]` | Añade tarea `pendiente`; prioridad por defecto `media` | `Tarea 3 añadida: Comprar leche [media]` |
-| `list` | `list [--estado pendiente\|hecha\|todas]` | Lista tareas ordenadas por `id` ascendente; estado por defecto `pendiente` | Una línea por tarea (formato abajo); si no hay ninguna: `No hay tareas.` |
+| `list` | `list [--estado pendiente\|hecha\|todas]` | Lista tareas ordenadas por `id` ascendente; estado por defecto `pendiente` | Una línea por tarea (formato abajo); si no hay ninguna: `No hay tareas.` (archivo inexistente o sin tareas); si hay tareas pero ninguna en el filtro: `No hay tareas pendientes. Usa --estado todas.` / `No hay tareas hechas. Usa --estado todas.` |
 | `done` | `done ID` | Marca la tarea como `hecha`. Idempotente: si ya estaba hecha, éxito con aviso | `Tarea 3 marcada como hecha.` / `La tarea 3 ya estaba hecha.` |
 | `remove` | `remove ID` | Elimina la tarea; el ID no se reutiliza | `Tarea 3 eliminada.` |
 
@@ -79,7 +79,7 @@ Resolución de la ruta del archivo (orden de precedencia): `--archivo` > variabl
 | 0 | Éxito |
 | 1 | Error de validación o de dominio (texto vacío/largo/con caracteres de control, ID inexistente, límite de tareas alcanzado) |
 | 2 | Error de uso de la CLI (argumentos inválidos: prioridad/estado fuera de lista, ID no entero, falta de subcomando). Lo produce `argparse` (`SystemExit(2)`); no se redefine |
-| 3 | Error de almacenamiento (JSON corrupto, esquema inválido, versión desconocida, ruta inválida/symlink/directorio, permisos o E/S del sistema, archivo demasiado grande) |
+| 3 | Error de almacenamiento (JSON corrupto, esquema inválido, versión desconocida, ruta inválida/symlink/directorio/archivo no regular, permisos o E/S del sistema, archivo demasiado grande) o error al escribir la salida (stdout lleno o inválido; un `BrokenPipeError` termina en silencio con 0) |
 
 `cli.principal(argv: Sequence[str] | None = None) -> int` devuelve el código; solo `__main__.py` llama a `sys.exit`. Ninguna excepción prevista llega al usuario como traza: se captura en `principal` y se traduce a mensaje + código. No usar `except Exception` desnudo ni silenciar errores (B110/BLE001).
 
@@ -91,15 +91,16 @@ Resolución de la ruta del archivo (orden de precedencia): `--archivo` > variabl
 | Texto con caracteres de control | `Error: el texto contiene caracteres de control no permitidos.` | 1 |
 | ID inexistente | `Error: no existe la tarea con ID {id}.` | 1 |
 | Límite de tareas | `Error: se alcanzó el máximo de 1000 tareas.` | 1 |
-| ID no entero / prioridad o estado inválidos / falta subcomando | Mensaje estándar de `argparse` (`usage: ...` + `error: ...`) | 2 |
+| ID no entero / prioridad o estado inválidos / falta subcomando | Mensaje de `argparse` localizado al español (`uso: ...` + `<prog>: error: ...`) | 2 |
 | Archivo no es JSON válido | `Error: el archivo '{ruta}' no es JSON válido; corrígelo o elimínalo.` | 3 |
 | JSON válido con estructura inválida | `Error: el archivo '{ruta}' tiene una estructura inválida: {detalle}.` | 3 |
 | Versión de esquema desconocida | `Error: versión de esquema {v} no soportada (se esperaba 1).` | 3 |
 | Archivo > 1 MiB | `Error: el archivo '{ruta}' supera el tamaño máximo permitido (1 MiB).` | 3 |
-| Ruta es un directorio, symlink o el directorio padre no existe | `Error: ruta de archivo no válida '{ruta}': {motivo}.` | 3 |
+| Ruta es un directorio, symlink, archivo no regular (FIFO, dispositivo) o el directorio padre no existe | `Error: ruta de archivo no válida '{ruta}': {motivo}.` | 3 |
 | `OSError` al leer/escribir (permisos, disco lleno) | `Error: no se pudo acceder al archivo '{ruta}': {strerror}.` | 3 |
+| `OSError` al escribir la salida (stdout) | `Error: no se pudo escribir la salida: {strerror}.` y, si el comando ya había guardado cambios, se añade ` El cambio sí se guardó.` | 3 |
 
-`{ruta}` es la ruta tal como la dio el usuario (sin resolver), `{detalle}` y `{motivo}` son textos propios y acotados (nunca el repr de una excepción de Python ni contenido del archivo sin acotar). Mensajes de sugerencia opcional permitidos solo si caben en la misma línea.
+`{ruta}` es la ruta tal como la dio el usuario (sin resolver) y con los caracteres no imprimibles escapados (`\x1b`), `{detalle}` y `{motivo}` son textos propios y acotados (nunca el repr de una excepción de Python ni contenido del archivo sin acotar). Mensajes de sugerencia opcional permitidos solo si caben en la misma línea.
 
 ## Modelo de datos (esquema JSON versionado)
 
@@ -274,7 +275,7 @@ El gate necesita que `ruff`, `mypy`, `pytest`, `bandit` y `pip-audit` estén en 
 Ninguna en runtime (solo librería estándar). Dev: ruff, mypy, pytest, bandit, pip-audit, todos oficiales (Astral, python/mypy, pytest-dev, PyCQA, PyPA), justificados por el estándar de calidad del motor.
 
 ### CI
-El template `.claude/templates/ci-quality.yml` ejecuta el gate sobre `.`, pero este proyecto vive en `apps/gestor-tareas/` y mypy/ruff deben correr con ese directorio como cwd. Por tanto el Builder crea `.github/workflows/quality.yml` **adaptado** (no copia literal): mismos `permissions: contents: read`, `on: push/pull_request`, `actions/checkout@v4`, `actions/setup-python@v5` con `python-version: "3.12"`; instala `pip install -r apps/gestor-tareas/requirements-dev.txt` (y `requirements.txt`); y ejecuta `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out quality-gate.md` más el paso de publicar reporte en `$GITHUB_STEP_SUMMARY`. Se omite `setup-node` (no hay Node). El workflow existente `validate-engine.yml` no se modifica. Recomendación documentada (no ejecutable por el agente): proteger `main` exigiendo el check "Quality gate". El CI usa Python 3.12 y el proyecto soporta >= 3.11, por lo que los tests no deben depender de comportamiento exclusivo de 3.13.
+El template `.claude/templates/ci-quality.yml` ejecuta el gate sobre `.`, pero este proyecto vive en `apps/gestor-tareas/` y mypy/ruff deben correr con ese directorio como cwd. Por tanto el Builder crea `.github/workflows/quality.yml` **adaptado** (iteración 2: por decisión del Approver queda como plantilla en `apps/gestor-tareas/.github/workflows/quality.yml`, que GitHub no ejecuta en este monorepo; el gate local es la verificación vigente, ver README) (no copia literal): mismos `permissions: contents: read`, `on: push/pull_request`, `actions/checkout@v4`, `actions/setup-python@v5` con `python-version: "3.12"`; instala `pip install -r apps/gestor-tareas/requirements-dev.txt` (y `requirements.txt`); y ejecuta `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out quality-gate.md` más el paso de publicar reporte en `$GITHUB_STEP_SUMMARY`. Se omite `setup-node` (no hay Node). El workflow existente `validate-engine.yml` no se modifica. Recomendación documentada (no ejecutable por el agente): proteger `main` exigiendo el check "Quality gate". El CI usa Python 3.12 y el proyecto soporta >= 3.11, por lo que los tests no deben depender de comportamiento exclusivo de 3.13.
 
 ## Amenazas relevantes (OWASP) y mitigaciones
 | Amenaza | Riesgo concreto | Mitigación obligatoria | Test |
@@ -292,7 +293,7 @@ El template `.claude/templates/ci-quality.yml` ejecuta el gate sobre `.`, pero e
 SSRF y subida de archivos: no aplican (sin red). Cabeceras/CSP: no aplican (sin web).
 
 ## Requisitos de UX (terminal)
-- `--help` en el comando raíz y en cada subcomando, con descripción en español, valores permitidos de `--prioridad`/`--estado` (usar `choices`) y mención de `--archivo` y `GESTOR_TAREAS_ARCHIVO` (con la precedencia). `prog` fijo: `gestor-tareas`.
+- `--help` en el comando raíz y en cada subcomando, con descripción en español, cadenas de la ayuda (`uso:`, `opciones:`, `-h`) y errores de uso comunes en español, `--prioridad`/`--estado` con su valor por defecto en el `help`, ejemplo en `add`/`list`/`done`/`remove`, valores permitidos de `--prioridad`/`--estado` (usar `choices`) y mención de `--archivo` y `GESTOR_TAREAS_ARCHIVO` (con la precedencia). `prog` fijo: `gestor-tareas`.
 - Mensajes siempre en español, una línea, accionables, con prefijo `Error: ` a stderr; resultados a stdout. Sin colores ni animaciones (compatible con redirección y lectores de pantalla); salida estable y parseable en `list`.
 - Confirmaciones concretas que repiten el ID afectado (ver tabla de comandos). `done` sobre una tarea ya hecha no es error.
 - Códigos de salida 0/1/2/3 documentados en README y `--help` (epílogo).
@@ -303,7 +304,7 @@ SSRF y subida de archivos: no aplican (sin red). Cabeceras/CSP: no aplican (sin 
 Notación: `A` = archivo temporal en `tmp_path`, `main(args)` = `cli.principal(["--archivo", str(A), *args])`.
 
 Comandos y persistencia
-1. Archivo inexistente: `main(["list"])` -> código 0, stdout `No hay tareas.`; `A` no existe después.
+1. Archivo inexistente: `main(["list"])` -> código 0, stdout `No hay tareas.`; `A` no existe después. Archivo sin tareas: igual (con cualquier `--estado`).
 2. `main(["add","Comprar leche"])` en archivo inexistente -> código 0, stdout `Tarea 1 añadida: Comprar leche [media]`; `A` existe y contiene `version==1`, `siguiente_id==2`, una tarea con `id==1`, `prioridad=="media"`, `estado=="pendiente"`, `creada` parseable.
 3. `add "Pagar luz" --prioridad alta` luego `list` -> dos líneas ordenadas por ID; `   2  [ ]  alta   Pagar luz` aparece (formato exacto con el ancho de columnas especificado).
 4. `done 1` -> código 0, `Tarea 1 marcada como hecha.`; `list` (por defecto pendiente) no muestra la 1; `list --estado hecha` solo la 1; `list --estado todas` ambas (la 1 con `[x]`). `done 1` otra vez -> código 0, `La tarea 1 ya estaba hecha.`.
@@ -339,9 +340,18 @@ Lógica pura
 26. `validar_documento(documento_a_datos(doc)) == doc` para documentos válidos (ida y vuelta).
 
 Calidad
-27. `python -m gestor_tareas --help` devuelve 0 e incluye `--archivo`, `GESTOR_TAREAS_ARCHIVO` y los códigos de salida.
+27. `python -m gestor_tareas --help` (subprocess) devuelve 0 e incluye `--archivo`, `GESTOR_TAREAS_ARCHIVO` y los códigos de salida; el texto está en español (`uso:`, `opciones:`).
 28. Ejecución real con `subprocess.run([sys.executable, "-m", "gestor_tareas", ...], cwd=<proyecto>, capture_output=True, text=True, check=False)` (lista de argumentos, sin shell): `add` y `list` funcionan de extremo a extremo y el código de salida del proceso coincide con `principal`.
 29. `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` -> exit 0 y `GATE: PASS (fallos: 0, sin verificar: 0)`; `ruff format --check .` sin diferencias; ningún `# noqa` / `# type: ignore` sin motivo.
+
+Iteración 2 (hallazgos de revisión)
+30. Salida rota: stdout que lanza `OSError` (o `/dev/full` por subprocess) -> código 3, `Error: no se pudo escribir la salida: ...` sin `Traceback`; tras `add` el mensaje añade `El cambio sí se guardó.` y la tarea está guardada; `BrokenPipeError` -> código 0 y stderr vacío; stdout `ascii` con acentos/emoji no falla.
+31. `--archivo` tras el subcomando funciona en `add`/`list`/`done`/`remove`; un `--archivo` previo no se pisa si el subcomando no lo repite.
+32. `list` con tareas pero ninguna en el filtro: `No hay tareas pendientes. Usa --estado todas.` / `No hay tareas hechas. Usa --estado todas.`; sin tareas: `No hay tareas.`
+33. Ayuda y errores de uso en español (`uso:`, `opciones:`, `-h`, `faltan argumentos obligatorios`, `opción no válida`); `--prioridad`/`--estado` muestran su valor por defecto; `add`/`list`/`done`/`remove` incluyen ejemplo.
+34. `--archivo` apuntando a un FIFO -> código 3 `ruta de archivo no válida '{ruta}': no es un archivo regular.` sin bloquearse.
+35. Una ruta con `\x1b` no emite ESC crudo en stderr (se muestra `\x1b`); rutas con acentos se muestran tal cual.
+36. `version` entero distinto de 1 se informa como versión no soportada aunque haya otras claves; el entero se trunca a 20 dígitos con `...`.
 
 ## Definición de terminado
 Gate en PASS; los 29 criterios cubiertos por tests en verde; sin BLOQUEANTE ni CAMBIOS de los revisores de seguridad, UX y código (UI: "no aplica"); README del proyecto con uso, límites, códigos de salida, variable de entorno y la limitación de concurrencia; el Builder reporta en `build.md` cualquier ajuste respecto de este PRP (por ejemplo, reglas de ruff renombradas o la decisión sobre ID 0/negativos). Sin push a `main`; entrega por PR (riesgo bajo, pero la fusión a `main` solo con orden explícita).

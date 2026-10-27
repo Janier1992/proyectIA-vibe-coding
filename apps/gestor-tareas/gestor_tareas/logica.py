@@ -19,6 +19,7 @@ from gestor_tareas.modelo import (
 
 CLAVES_RAIZ = frozenset({"version", "siguiente_id", "tareas"})
 CLAVES_TAREA = frozenset({"id", "texto", "prioridad", "estado", "creada"})
+MAX_DIGITOS_VERSION = 20
 FILTROS_ESTADO = (*ESTADOS, "todas")
 
 
@@ -148,15 +149,21 @@ def _validar_creada(creada: object) -> None:
         _rechazar("'creada' no es una fecha ISO 8601")
 
 
+def _version_corta(version: object) -> str:
+    texto = str(version)
+    return texto if len(texto) <= MAX_DIGITOS_VERSION else texto[:MAX_DIGITOS_VERSION] + "..."
+
+
 def _validar_cabecera(datos: dict[object, object]) -> None:
+    version = datos.get("version")
+    if _es_entero(version) and version != VERSION_ESQUEMA:
+        corta = _version_corta(version)
+        msg = f"versión de esquema {corta} no soportada (se esperaba {VERSION_ESQUEMA})."
+        raise ErrorDeAlmacen(msg)
     if set(datos) != CLAVES_RAIZ:
         _rechazar("las claves de la raíz no son las esperadas")
-    version = datos["version"]
     if not _es_entero(version):
         _rechazar("'version' debe ser un entero")
-    if version != VERSION_ESQUEMA:
-        msg = f"versión de esquema {version} no soportada (se esperaba {VERSION_ESQUEMA})."
-        raise ErrorDeAlmacen(msg)
 
 
 def validar_documento(datos: object) -> Documento:

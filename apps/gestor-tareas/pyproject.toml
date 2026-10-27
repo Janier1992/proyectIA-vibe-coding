@@ -38,3 +38,6 @@ max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004"]
+# N818 (sufijo "Error" en excepciones): los nombres ErrorDeDominio y ErrorDeAlmacen los fija el
+# PRP y el contrato de mensajes; se ignora la regla solo en este archivo, sin "noqa" en línea.
+"gestor_tareas/modelo.py" = ["N818"]

@@ -123,7 +123,6 @@ def test_archivo_demasiado_grande(tmp_path: Path) -> None:
 def test_archivo_que_crece_tras_stat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     ruta = tmp_path / "t.json"
     ruta.write_bytes(b" " * (1_048_576 + 10))
-    monkeypatch.setattr(almacen, "TAMANO_MAXIMO_ARCHIVO", 1_048_576)
     original = Path.stat
 
     def stat_falso(self: Path, *, follow_symlinks: bool = True) -> os.stat_result:
@@ -179,3 +178,24 @@ def test_fallo_de_escritura_limpia_temporal(
     with pytest.raises(ErrorDeAlmacen, match="Input/output error"):
         almacen.guardar(tmp_path / "t.json", _doc())
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ("texto", "esperado"),
+    [
+        ("normal/ñandú.json", "normal/ñandú.json"),
+        ("a\x1b[31mb", "a\\x1b[31mb"),
+        ("a\x7fb", "a\\x7fb"),
+        ("a\nb", "a\\nb"),
+    ],
+)
+def test_texto_seguro(texto: str, esperado: str) -> None:
+    assert almacen.texto_seguro(texto) == esperado
+
+
+@POSIX
+def test_cargar_rechaza_archivo_no_regular(tmp_path: Path) -> None:
+    fifo = tmp_path / "tuberia"
+    os.mkfifo(fifo)
+    with pytest.raises(ErrorDeAlmacen, match="no es un archivo regular"):
+        almacen.guardar(fifo, _doc())

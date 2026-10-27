@@ -3,40 +3,13 @@
 import json
 import os
 import stat
-import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+from ayudas import POSIX, Entorno, ejecutar
 
 from gestor_tareas import cli
-
-PROYECTO = Path(__file__).resolve().parent.parent
-POSIX = pytest.mark.skipif(sys.platform == "win32", reason="permisos POSIX")
-
-
-class Entorno:
-    """Ayudante: ejecuta la CLI contra un archivo temporal y captura la salida."""
-
-    def __init__(self, ruta: Path, capsys: pytest.CaptureFixture[str]) -> None:
-        self.ruta = ruta
-        self.capsys = capsys
-
-    def main(self, *args: str) -> tuple[int, str, str]:
-        codigo = cli.principal(["--archivo", str(self.ruta), *args])
-        salida = self.capsys.readouterr()
-        return codigo, salida.out, salida.err
-
-
-@pytest.fixture
-def entorno(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
-) -> Entorno:
-    monkeypatch.delenv("GESTOR_TAREAS_ARCHIVO", raising=False)
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
-    return Entorno(tmp_path / "tareas.json", capsys)
 
 
 def test_list_sin_archivo(entorno: Entorno) -> None:
@@ -119,7 +92,8 @@ def test_texto_con_control(entorno: Entorno, texto: str) -> None:
 def test_errores_de_uso_codigo_2(entorno: Entorno, args: list[str]) -> None:
     codigo, _, err = entorno.main(*args)
     assert codigo == 2
-    assert "usage:" in err
+    assert err.startswith("uso:")
+    assert "usage:" not in err
     assert not entorno.ruta.exists()
 
 
@@ -307,24 +281,12 @@ def test_help_incluye_archivo_entorno_y_codigos(
         assert esperado in salida
 
 
-def _ejecutar(env: dict[str, str], *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(  # noqa: S603 - lista de args fija, sin shell
-        [sys.executable, "-m", "gestor_tareas", *args],
-        cwd=PROYECTO,
-        env=env,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
-
-
 def test_subprocess_extremo_a_extremo(tmp_path: Path) -> None:
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     ruta = str(tmp_path / "t.json")
-    agregado = _ejecutar(env, "--archivo", ruta, "add", "Reunión")
-    listar = _ejecutar(env, "--archivo", ruta, "list")
-    error = _ejecutar(env, "--archivo", ruta, "done", "9")
+    agregado = ejecutar(env, "--archivo", ruta, "add", "Reunión")
+    listar = ejecutar(env, "--archivo", ruta, "list")
+    error = ejecutar(env, "--archivo", ruta, "done", "9")
     assert (agregado.returncode, agregado.stdout) == (0, "Tarea 1 añadida: Reunión [media]\n")
     assert listar.returncode == 0
     assert "Reunión" in listar.stdout

@@ -1,6 +1,7 @@
 """Tests de la lógica pura (criterios 25 y 26 y validación de entradas)."""
 
 import ast
+import copy
 from pathlib import Path
 
 import pytest
@@ -146,32 +147,60 @@ def _con_tarea(**cambios: object) -> dict[str, object]:
 
 
 @pytest.mark.parametrize(
-    "datos",
+    ("datos", "detalle"),
     [
-        [],
-        {"version": 1, "siguiente_id": 1},
-        {**_datos_validos(), "extra": 1},
-        {**_datos_validos(), "version": "1"},
-        {**_datos_validos(), "version": True},
-        {**_datos_validos(), "siguiente_id": 2},
-        {**_datos_validos(), "siguiente_id": True},
-        {**_datos_validos(), "tareas": "no"},
-        {**_datos_validos(), "tareas": ["x"]},
-        _con_tarea(prioridad="urgente"),
-        _con_tarea(estado="borrada"),
-        _con_tarea(id=True),
-        _con_tarea(id=0),
-        _con_tarea(texto="\x1b[31m"),
-        _con_tarea(texto=5),
-        _con_tarea(texto=" con espacios "),
-        _con_tarea(creada="ayer"),
-        _con_tarea(creada=5),
-        _con_tarea(extra=1),
+        ([], "la raíz debe ser un objeto"),
+        ({"version": 1, "siguiente_id": 1}, "las claves de la raíz"),
+        ({**_datos_validos(), "extra": 1}, "las claves de la raíz"),
+        ({**_datos_validos(), "version": "1"}, "'version' debe ser un entero"),
+        ({**_datos_validos(), "version": True}, "'version' debe ser un entero"),
+        ({**_datos_validos(), "siguiente_id": 2}, "'siguiente_id' debe ser mayor"),
+        ({**_datos_validos(), "siguiente_id": True}, "'siguiente_id' debe ser un entero"),
+        ({**_datos_validos(), "tareas": "no"}, "'tareas' debe ser una lista"),
+        ({**_datos_validos(), "tareas": ["x"]}, "cada tarea debe ser un objeto"),
+        (_con_tarea(prioridad="urgente"), "'prioridad' no es válida"),
+        (_con_tarea(estado="borrada"), "'estado' no es válido"),
+        (_con_tarea(id=True), "'id' debe ser un entero"),
+        (_con_tarea(id=0), "'id' debe ser un entero"),
+        (_con_tarea(texto="\x1b[31m"), "'texto' no es válido"),
+        (_con_tarea(texto=5), "'texto' debe ser una cadena"),
+        (_con_tarea(texto=" con espacios "), "'texto' no es válido"),
+        (_con_tarea(creada="ayer"), "'creada' no es una fecha"),
+        (_con_tarea(creada=5), "'creada' debe ser una cadena"),
+        (_con_tarea(extra=1), "las claves de una tarea"),
     ],
 )
-def test_validar_documento_estructura_invalida(datos: object) -> None:
-    with pytest.raises(ErrorDeEstructura):
+def test_validar_documento_estructura_invalida(datos: object, detalle: str) -> None:
+    with pytest.raises(ErrorDeEstructura, match=detalle):
         logica.validar_documento(datos)
+
+
+def test_validar_documento_no_muta_la_entrada() -> None:
+    datos = _datos_validos([_tarea_datos(), _tarea_datos(id=3)])
+    copia = copy.deepcopy(datos)
+    logica.validar_documento(datos)
+    assert datos == copia
+
+
+def test_documento_a_datos_no_muta_el_documento() -> None:
+    doc = Documento(3, (_tarea(1), _tarea(2)))
+    copia = copy.deepcopy(doc)
+    logica.documento_a_datos(doc)
+    assert doc == copia
+
+
+def test_version_desconocida_gana_a_otras_claves() -> None:
+    with pytest.raises(ErrorDeAlmacen, match=r"versión de esquema 2 no soportada") as info:
+        logica.validar_documento({"version": 2, "otro": []})
+    assert not isinstance(info.value, ErrorDeEstructura)
+
+
+def test_version_desconocida_enorme_se_trunca() -> None:
+    with pytest.raises(ErrorDeAlmacen) as info:
+        logica.validar_documento({**_datos_validos(), "version": 10**40})
+    assert str(info.value) == (
+        f"versión de esquema {'1' + '0' * 19}... no soportada (se esperaba 1)."
+    )
 
 
 def test_validar_documento_ids_duplicados() -> None:

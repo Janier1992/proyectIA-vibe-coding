@@ -27,8 +27,15 @@ def ruta_indicada(archivo: str | None, entorno: Mapping[str, str]) -> str | None
     return entorno.get(VARIABLE_ENTORNO) or None
 
 
+def texto_seguro(texto: str) -> str:
+    """Escapa los caracteres no imprimibles (p. ej. ESC) para no inyectarlos en el terminal."""
+    return "".join(
+        c if c.isprintable() else c.encode("unicode_escape").decode("ascii") for c in texto
+    )
+
+
 def _ruta_invalida(texto: str, motivo: str) -> ErrorDeAlmacen:
-    return ErrorDeAlmacen(f"ruta de archivo no válida '{texto}': {motivo}.")
+    return ErrorDeAlmacen(f"ruta de archivo no válida '{texto_seguro(texto)}': {motivo}.")
 
 
 def resolver_ruta(archivo: str | None, entorno: Mapping[str, str]) -> Path:
@@ -48,6 +55,9 @@ def _validar_destino(ruta: Path, mostrar: str) -> None:
         raise _ruta_invalida(mostrar, "es un enlace simbólico")
     if ruta.is_dir():
         raise _ruta_invalida(mostrar, "es un directorio")
+    if ruta.exists() and not ruta.is_file():
+        # FIFO, dispositivos o sockets: abrirlos podría bloquear la CLI.
+        raise _ruta_invalida(mostrar, "no es un archivo regular")
     if not ruta.parent.is_dir():
         raise _ruta_invalida(mostrar, "el directorio padre no existe")
 
@@ -86,7 +96,7 @@ def _parsear(contenido: bytes, mostrar: str) -> Documento:
 
 def cargar(ruta: Path, mostrar: str | None = None) -> Documento:
     """Carga y valida el documento; un archivo inexistente es una lista vacía."""
-    texto = mostrar if mostrar is not None else str(ruta)
+    texto = texto_seguro(mostrar if mostrar is not None else str(ruta))
     _validar_destino(ruta, texto)
     try:
         if not ruta.exists():
@@ -115,7 +125,7 @@ def _escribir_temporal(ruta: Path, texto: str) -> Path:
 
 def guardar(ruta: Path, doc: Documento, mostrar: str | None = None) -> None:
     """Guarda el documento con escritura atómica y permisos 0o600."""
-    texto = mostrar if mostrar is not None else str(ruta)
+    texto = texto_seguro(mostrar if mostrar is not None else str(ruta))
     _validar_destino(ruta, texto)
     serializado = json.dumps(documento_a_datos(doc), ensure_ascii=False, indent=2, sort_keys=True)
     try:
