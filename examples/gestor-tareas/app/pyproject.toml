@@ -1,0 +1,43 @@
+[project]
+name = "gestor-tareas"
+version = "0.1.0"
+description = "CLI para gestionar una lista personal de tareas en un archivo JSON local."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+warn_unused_ignores = true
+disallow_any_explicit = true
+show_error_codes = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+    "node_modules", ".claude", ".agents", "factory", "PRPs", "examples",
+    "dist", "build", ".next", ".venv", "venv", "coverage",
+]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "C90", "S", "BLE", "SIM", "PTH",
+    "RET", "ARG", "ANN", "PL", "TRY", "PT", "RUF", "ERA", "PERF", "FBT", "DTZ", "EM",
+    "ISC", "G", "T10",
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004"]
+# N818 (sufijo "Error" en excepciones): los nombres ErrorDeDominio y ErrorDeAlmacen los fija el
+# PRP y el contrato de mensajes; se ignora la regla solo en este archivo, sin "noqa" en línea.
+"gestor_tareas/modelo.py" = ["N818"]

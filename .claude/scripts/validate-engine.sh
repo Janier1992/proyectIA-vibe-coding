@@ -36,6 +36,7 @@ ok "Rutas .claude/ referenciadas existen"
 python3 -c "import json; json.load(open('.claude/settings.json'))" 2>/dev/null || fail ".claude/settings.json no es JSON válido"
 hook=$(grep -oE '\.claude/hooks/[A-Za-z0-9_.-]+\.sh' .claude/settings.json | head -n 1)
 { [ -n "$hook" ] && [ -x "$hook" ]; } || fail "El hook registrado no existe o no es ejecutable"
+grep -q "CLAUDE_PROJECT_DIR" "$hook" || fail "$hook debe anclarse a CLAUDE_PROJECT_DIR (si no, crea .claude/logs en el directorio de trabajo)"
 ok "Skills y hook consistentes"
 
 # 6. Todos los archivos de reglas apuntan a CLAUDE.md y mencionan Factory
@@ -65,8 +66,11 @@ for t in examples/*/app/; do
   if ls "$t"*.test.js >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
     node --test "$t"*.test.js >/dev/null 2>&1 || fail "Fallan los tests de $t"
   fi
-  if ls "$t"tests/test_*.py >/dev/null 2>&1 && command -v pytest >/dev/null 2>&1; then
-    (cd "$t" && pytest -q >/dev/null 2>&1) || fail "Fallan los tests de $t"
+  if ls "$t"tests/test_*.py >/dev/null 2>&1; then
+    runner=pytest; [ -x "$t.venv/bin/pytest" ] && runner="$PWD/$t.venv/bin/pytest"
+    if command -v "$runner" >/dev/null 2>&1; then
+      (cd "$t" && "$runner" -q >/dev/null 2>&1) || fail "Fallan los tests de $t"
+    else echo "⚠️  pytest no disponible: no se ejecutaron los tests de $t"; fi
   fi
 done
 ok "Tests de ejemplos revisados"
