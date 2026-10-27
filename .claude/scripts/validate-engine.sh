@@ -55,18 +55,21 @@ for dir in PRPs factory; do
   extra=$(git ls-files "$dir" | grep -v '/\.gitkeep$')
   [ -z "$extra" ] || fail "$dir/ debe estar vacía en el kit (mueve los ejemplos a examples/): $extra"
 done
-grep -rnE "examples/[A-Za-z0-9]|calculadora-propinas" --exclude-dir=scripts .claude CLAUDE.md .cursorrules .windsurfrules .agents/AGENTS.md >/dev/null 2>&1 \
-  && fail "El motor no debe depender del ejemplo (referencias a examples/ o calculadora-propinas)"
+grep -rnE "examples/[A-Za-z0-9]" --exclude-dir=scripts .claude CLAUDE.md .cursorrules .windsurfrules .agents/AGENTS.md >/dev/null 2>&1 \
+  && fail "El motor no debe depender de un ejemplo concreto (referencias a examples/<nombre>)"
 ok "Kit genérico: sin artefactos ni dependencias de ejemplos"
 
-# 9. Los tests de los ejemplos siguen pasando (si hay Node)
-if command -v node >/dev/null 2>&1; then
-  for t in examples/*/app/; do
-    ls "$t"*.test.js >/dev/null 2>&1 || continue
+# 9. Los tests de los ejemplos siguen pasando (Node y Python, si hay herramienta)
+for t in examples/*/app/; do
+  [ -d "$t" ] || continue
+  if ls "$t"*.test.js >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
     node --test "$t"*.test.js >/dev/null 2>&1 || fail "Fallan los tests de $t"
-  done
-  ok "Tests de ejemplos revisados"
-fi
+  fi
+  if ls "$t"tests/test_*.py >/dev/null 2>&1 && command -v pytest >/dev/null 2>&1; then
+    (cd "$t" && pytest -q >/dev/null 2>&1) || fail "Fallan los tests de $t"
+  fi
+done
+ok "Tests de ejemplos revisados"
 
 # 10. Calidad verificable: piezas del quality gate presentes y conectadas al pipeline
 for f in .claude/scripts/quality-gate.sh .claude/scripts/test-quality-gate.sh .claude/prompts/estandar-calidad.md .claude/templates/ci-quality.yml; do

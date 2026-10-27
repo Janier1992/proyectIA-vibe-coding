@@ -36,7 +36,6 @@ proyectIA-vibe-coding/
 ├── PRPs/                      # PRPs generados con /generar-prp
 ├── factory/                   # Artefactos de cada corrida de /factory (vacía en el kit)
 ├── examples/                  # Ejemplos de referencia (no se copian a tus proyectos)
-│   └── calculadora-propinas/  # Corrida Factory completa: app/, prp.md y run/
 ├── .github/workflows/         # CI que valida la consistencia del motor
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
@@ -78,7 +77,6 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 
 Los artefactos de cada corrida quedan en `factory/[feature]/`.
 
-Ejemplo: [`calculadora-propinas`](examples/calculadora-propinas/run/) (app en [`examples/calculadora-propinas/app/`](examples/calculadora-propinas/app/README.md)).
 
 ### Lecciones de la primera corrida
 
