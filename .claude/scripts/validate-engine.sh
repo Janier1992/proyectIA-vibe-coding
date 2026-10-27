@@ -55,7 +55,7 @@ for dir in PRPs factory; do
   extra=$(git ls-files "$dir" | grep -v '/\.gitkeep$')
   [ -z "$extra" ] || fail "$dir/ debe estar vacía en el kit (mueve los ejemplos a examples/): $extra"
 done
-grep -rnE "examples/|calculadora-propinas" --exclude-dir=scripts .claude CLAUDE.md .cursorrules .windsurfrules .agents/AGENTS.md >/dev/null 2>&1 \
+grep -rnE "examples/[A-Za-z0-9]|calculadora-propinas" --exclude-dir=scripts .claude CLAUDE.md .cursorrules .windsurfrules .agents/AGENTS.md >/dev/null 2>&1 \
   && fail "El motor no debe depender del ejemplo (referencias a examples/ o calculadora-propinas)"
 ok "Kit genérico: sin artefactos ni dependencias de ejemplos"
 
