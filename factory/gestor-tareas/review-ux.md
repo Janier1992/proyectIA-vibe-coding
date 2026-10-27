@@ -1,37 +1,26 @@
-# Revisión UX: gestor-tareas (CLI)
+# Revisión UX (iteración 2): gestor-tareas (CLI)
 
-Método: ejecución real (`python3 -m gestor_tareas`, PYTHONPATH al proyecto, archivos en un directorio temporal fuera del repo). Nota: `apps/gestor-tareas/.venv` no existe; no hace falta, ya que no hay dependencias de runtime. Diff revisado: `apps/gestor-tareas` (cli.py, README.md).
+Método: ejecuté la herramienta real (`.venv/bin/python -m gestor_tareas`) desde directorios temporales fuera del repo. `pytest -q`: 144 passed.
 
-## Lo que funciona bien
-- `--help` raíz: descripción, subcomandos, precedencia del archivo, `GESTOR_TAREAS_ARCHIVO` y códigos de salida (0/1/2/3). Cumple el criterio 27.
-- Confirmaciones claras y con el ID: `Tarea 1 añadida: ... [media]`, `Tarea 1 marcada como hecha.`, `La tarea 1 ya estaba hecha.`, `Tarea 2 eliminada.`
-- Errores de dominio y almacenamiento: prefijo `Error:`, van a stderr, sin traceback, accionables (`corrígelo o elimínalo`, `el directorio padre no existe`, `es un directorio`). Códigos verificados: 0, 1 (ID inexistente, vacío, control), 2 (uso), 3 (JSON corrupto, ruta).
-- `list`: orden por ID, columnas alineadas, estado con `[x]`/`[ ]` en texto (no depende del color; no se emite ningún color/ANSI). Con pipe, `cat -A` y redirección a archivo la salida es idéntica y limpia. UTF-8 (CJK, emoji) correcto. Compatible con lector de pantalla (texto plano línea por línea).
-- `list` no escribe; `done` idempotente; `add -- "-x"` funciona.
-- IDs 0/abc: mensaje claro con código 2.
+## Verificación de los 4 hallazgos obligatorios de la iteración 1
 
-## Hallazgos
+| # | Hallazgo | Resultado | Evidencia |
+|---|---|---|---|
+| 1 | Salida rota | CORREGIDO | `list > /dev/full`: `Error: no se pudo escribir la salida: No space left on device.`, código 3. `add "zz" > /dev/full`: mismo mensaje más ` El cambio sí se guardó.`, código 3, y la tarea 3 aparece luego en `list`. Con `PYTHONIOENCODING=ascii` y acentos: no hay traceback, sale `caf? ?and?`, código 0. `list \| head -0`: código 0 y sin ruido. |
+| 2 | `--archivo` tras el subcomando | CORREGIDO | `add x --archivo otro.json`, `list --archivo otro.json` y `--archivo otro.json list` dan el mismo resultado y crean `otro.json`. Aparece en la ayuda de los 4 subcomandos. |
+| 3 | Mensaje de `list` por filtro | CORREGIDO | Sin tareas: `No hay tareas.` Con tareas pero filtro vacío: `No hay tareas hechas. Usa --estado todas.` y `No hay tareas pendientes. Usa --estado todas.` Ambos con código 0. |
+| 4 | Ayuda y argparse en español | CORREGIDO | `--help` general y de `add`, `list`, `done` y `remove` están en español (`uso:`, `argumentos posicionales:`, `opciones:`, `muestra esta ayuda y termina`). Los defaults se ven (`por defecto: media`, `por defecto: pendiente`, ruta del archivo). Cada subcomando trae `Ejemplo:`. La ayuda general trae precedencia del archivo y tabla de códigos de salida. |
 
-### CAMBIOS-1: `--archivo` después del subcomando da un error sin pista
-`cli.py:50-56` (opción solo en el parser raíz). Reproducido: `gestor-tareas list --archivo X` -> `error: unrecognized arguments: --archivo X` (código 2). Es el error más probable de un usuario nuevo; el mensaje no dice que debe ir antes del subcomando (solo lo dice `--help`/README).
-Corrección sugerida: aceptar `--archivo` también en los subparsers (parent parser con `default=argparse.SUPPRESS`) o, como mínimo, añadir al `usage`/mensaje de error la pista "`--archivo` va antes del comando".
+## Regresiones revisadas
+- Errores de uso, todos en español y con código 2: sin comando, comando desconocido, falta de `texto` o `id`, `id` no numérico, `done 0`, prioridad inválida y opción desconocida. Los mensajes dicen qué se esperaba (por ejemplo `ID no válido: 'abc' (se esperaba un entero >= 1)`).
+- Códigos de salida coherentes con el README y la ayuda: 0 éxito; 1 ID inexistente o texto vacío o en blanco; 2 uso; 3 JSON corrupto (`b.json`), directorio padre inexistente y fallo de escritura de salida. Los errores van con el prefijo `Error: ` y son accionables (`corrígelo o elimínalo`).
+- README: el inicio rápido de 3 comandos coincide con la salida real. La sección "CI" dice con claridad que la plantilla no se ejecuta en el monorepo y da el gate local como verificación vigente. La cabecera del workflow lo repite. La tabla de códigos de salida y la sección Limitaciones son coherentes con lo observado.
 
-### CAMBIOS-2: Traceback ante fallo de escritura en stdout (y mensaje engañoso tras persistir)
-`cli.py:148` (`print(mensaje)` sin protección). Reproducido: `list > /dev/full` -> `OSError: [Errno 28]` con traceback, exit 1; con `PYTHONIOENCODING=ascii`, `list` con emoji -> `UnicodeEncodeError` con traceback. Peor: en `add`/`done`/`remove` el guardado ya ocurrió antes del `print`, por lo que el usuario ve un traceback y código 1 (que el README define como "error de validación") aunque el cambio sí se guardó. Esto contradice la promesa de "sin traceback" y de códigos coherentes. Un `| head` (BrokenPipe) tiene el mismo riesgo.
-Corrección sugerida: envolver la impresión en `try/except (OSError, UnicodeEncodeError)`; con BrokenPipe salir en silencio; en el resto escribir `Error: no se pudo escribir la salida: ...` a stderr con código 3 (documentarlo), y/o imprimir la confirmación de forma tolerante (`errors="replace"`).
+## Hallazgos menores (no bloquean; opcionales)
+1. `gestor_tareas/cli.py` (tabla `TRADUCCIONES`): el mensaje de `invalid choice` queda como `opción no válida: 'hechas' (opciones: 'pendiente', 'hecha', 'todas')`. Es claro, pero el mensaje de `list` vacío habla de "hechas/pendientes" en plural y `--estado` acepta el singular. Mejora opcional: aceptar también el plural o escribir en el mensaje el valor exacto (`--estado hecha`). Al escribir "hechas" el usuario ve un error de uso que lista las opciones válidas, así que no queda sin salida.
+2. La opción corta `-a` no existe y da `argumentos no reconocidos: -a f.json`. Es aceptable (nunca se prometió) y el mensaje es claro.
+3. Higiene del repo, fuera de UX: `apps/gestor-tareas/.claude/` aparece sin seguimiento en `git status`. Debe decidirse si se commitea (el workflow la asume copiada) o se ignora.
 
-### CAMBIOS-3: `list` vacío por filtro es ambiguo
-`cli.py:97-98`. Con 1 tarea hecha y ninguna pendiente, `list` imprime `No hay tareas.` aunque existe una; el usuario puede creer que perdió datos. Corrección: mensaje según filtro, p. ej. `No hay tareas pendientes.` y, si el documento tiene tareas de otro estado, sugerir `Usa --estado todas.` (el PRP fija `No hay tareas.` para archivo inexistente, mantener ese caso).
+No hay hallazgos CAMBIOS ni BLOQUEANTES. Los criterios de accesibilidad del tema (teclado y foco, contraste, alt) no aplican a una CLI. Los equivalentes se cumplen: no se depende del color, la salida es texto plano y los errores se envían a stderr.
 
-### CAMBIOS-4: Ayuda de subcomandos incompleta y mezcla de idiomas
-`cli.py:65,68`. `add --prioridad` y `list --estado` no tienen `help` ni indican el valor por defecto (`media`, `pendiente`); `done --help`/`add --help` no tienen epílogo ni ejemplo. Las cadenas de argparse salen en inglés (`usage:`, `show this help message and exit`, `the following arguments are required`, `invalid choice`) mezcladas con el resto en español, lo que afecta a lectores de pantalla con voz española. Corrección: añadir `help=` con defaults; localizar con `add_help=False` + `-h` en español y subclase de `ArgumentParser.error`, o aceptar y documentar la limitación.
-
-### Observaciones (no bloquean)
-- `remove` no pide confirmación ni muestra el texto eliminado; es destructivo e irreversible (el ID no se reutiliza). En CLI no interactiva es aceptable y el PRP solo exige confirmación con ID, pero imprimir el texto (`Tarea 2 eliminada: Pagar luz.`) permitiría detectar errores de ID. Sugerido, no exigido.
-- Texto largo (hasta 200 car.) no se trunca ni ajusta; aceptable, sigue legible en pipes.
-- README: es correcto y completo, pero el "empezar en un minuto" exige deducir cómo ejecutar; falta un bloque de inicio rápido con ejemplos concretos (`cd apps/gestor-tareas; python -m gestor_tareas add "Comprar leche"`, `list`, `done 1`), y menciona que `python` debe ser >= 3.11. Añadir 4 líneas de ejemplo con salida esperada. No documenta el comando `-h` por subcomando ni un alias `gestor-tareas` (el `prog` en la ayuda dice `gestor-tareas` pero se ejecuta con `python -m gestor_tareas`; pequeña incoherencia).
-
-## Veredicto
-Sin defectos que bloqueen producción (no hay pérdida de datos ni fallos de accesibilidad graves), pero hay cuatro puntos de pulido que conviene corregir, siendo el 1 y el 2 los más relevantes.
-
-VEREDICTO: CAMBIOS
+VEREDICTO: APROBADO

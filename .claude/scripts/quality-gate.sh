@@ -21,6 +21,7 @@ for venv in .venv venv; do
 done
 
 MAX_FILE_LINES=500
+MAX_FUNC_LINES=50
 EXCLUDE_DIRS=(node_modules .git .claude .agents factory PRPs examples dist build .next .venv venv __pycache__ coverage)
 EXCL_RE='(node_modules|\.git|\.claude|\.agents|factory|PRPs|examples|dist|build|\.next|\.venv|venv|__pycache__|coverage)'
 EXCL_CSV=$(IFS=,; echo "${EXCLUDE_DIRS[*]}")
@@ -73,6 +74,29 @@ check_size() {
   done < <(find_files js jsx ts tsx mjs cjs py sh html css)
   if [ -z "$big" ]; then add tamano PASS "Todos los archivos ≤ $MAX_FILE_LINES líneas"
   else add tamano FAIL "Superan $MAX_FILE_LINES líneas:$big"; fi
+}
+
+# Límite de CLAUDE.md: funciones de Python con más de MAX_FUNC_LINES líneas (medido con ast)
+check_func_size() {
+  has_files py || return
+  local py='
+import ast, sys
+limit = int(sys.argv[1])
+for path in sys.argv[2:]:
+    try:
+        tree = ast.parse(open(path, encoding="utf-8").read())
+    except (SyntaxError, UnicodeDecodeError):
+        continue
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            size = node.end_lineno - node.lineno + 1
+            if size > limit:
+                print(f"{path}:{node.lineno} {node.name}({size})")
+'
+  local hits
+  hits=$(find_files py | tr '\n' '\0' | xargs -0 python3 -c "$py" "$MAX_FUNC_LINES" | tr '\n' ' ')
+  if [ -z "$hits" ]; then add funciones PASS "Funciones Python ≤ $MAX_FUNC_LINES líneas"
+  else add funciones FAIL "Superan $MAX_FUNC_LINES líneas: $hits"; fi
 }
 
 check_patterns() {
@@ -161,5 +185,5 @@ report() {
   exit $code
 }
 
-check_secrets; check_size; check_patterns; check_node; check_python
+check_secrets; check_size; check_func_size; check_patterns; check_node; check_python
 report

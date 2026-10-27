@@ -1,70 +1,69 @@
-# Revisión de Código: gestor-tareas
+# Revisión de código: gestor-tareas (iteración 2)
 
-Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Nivel de riesgo: bajo | Diff: `git diff 3a44109..HEAD -- apps/gestor-tareas` (15 archivos, 1387 líneas)
+Rama `factory/gestor-tareas`, diff `7a3bc26..HEAD` sobre `apps/gestor-tareas`. PRP: `PRPs/gestor-tareas-2026-10-27.md`.
 
-## Resultados reales (ejecutados por el revisor, venv `apps/gestor-tareas/.venv`)
-| Comprobación | Resultado |
+## Resultados reales
+| Verificación | Resultado |
 |---|---|
-| `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` | `GATE: PASS (fallos: 0, sin verificar: 0)`, 8/8 en PASS (incluye `dependencias-py`) |
-| `pytest -q` (Python 3.13.17) | 109 passed |
-| `pytest -q` en Python 3.11 y 3.12 (venvs temporales con pytest 9.1.1) | 109 passed en ambos |
-| `ruff check .` / `ruff format --check .` | All checks passed / 10 files already formatted |
-| `mypy .` (estricto, incluye tests) | Success, 9 source files |
-| `bandit -q -r . -ll -x ./tests` | Sin hallazgos (exit 0) |
-| `pip-audit -r requirements.txt` | No known vulnerabilities found |
+| Gate `quality-gate.sh apps/gestor-tareas` (raíz) | GATE: PASS, 8/8 (fallos 0, sin verificar 0) |
+| Gate `quality-gate.sh .` (raíz entera) | FAIL, pero no es del proyecto: pytest no encuentra `gestor_tareas` desde la raíz y bandit escanea todo el monorepo. Es el desajuste monorepo/gate ya conocido; la verificación vigente es la del subdirectorio. |
+| `pytest -q` (.venv, 3.13) | 144 passed |
+| `pytest -q` en 3.11 y 3.12 (venvs temporales, copia fuera del repo) | 144 passed en ambas |
+| `ruff check .` / `ruff format --check .` | All checks passed / 13 files already formatted |
+| `mypy .` (estricto) | Success, 12 files |
+| Líneas por archivo | máx. 294 (tests) y 281 (`cli.py`); todo bajo 500 |
 
-## Límites y nomenclatura
-- Archivos: el mayor es `tests/test_cli.py` (332 líneas); ninguno supera 500. Funciones todas por debajo de 50 líneas. C90 (complejidad 10) en PASS.
-- Nomenclatura conforme a CLAUDE.md (directorio kebab-case, paquete snake_case por obligación del lenguaje, constantes UPPER_SNAKE_CASE).
-- Sin código muerto ni duplicación relevante. Estructura proporcionada (KISS): `COMANDOS` como dispatch simple, sin capas extra.
+El `quality-gate.md` del repo quedó sobrescrito por mi última ejecución, la del subdirectorio (PASS).
 
-## Separación lógica pura / E/S / CLI
-Correcta. `logica.py` solo importa `dataclasses`, `datetime` (únicamente `fromisoformat`), `typing` y `modelo`; no lee reloj (la CLI inyecta `creada` vía `_ahora()`), todas las funciones devuelven objetos nuevos inmutables (`frozen`, tuplas). `almacen.py` concentra la E/S y compone los mensajes con la ruta; `cli.py` solo orquesta (cargar, función pura, guardar solo si `nuevo is not None`) y traduce excepciones a códigos. `ErrorDeEstructura` es un ajuste razonable y documentado para que la lógica no conozca rutas. Solo `__main__.py` llama a `sys.exit`.
+## Mutaciones: ¿cada arreglo tiene un test que falla sin él?
+Hecho en una copia fuera del repo (scratchpad), revirtiendo un arreglo cada vez.
 
-## Manejo de errores y llamadas externas
-- Sin red. E/S de disco: `OSError` traducido en `cargar` y `guardar`; `RecursionError`/`ValueError` capturados al parsear; lectura acotada a `TAMANO_MAXIMO_ARCHIVO + 1`; temporal con `mkstemp` en el mismo directorio, `fsync`, `chmod 0o600`, `replace`, limpieza en `finally`. El `except BaseException` en `_escribir_temporal` relanza siempre (no silencia), válido.
-- No hay `except Exception` desnudo; ruff `BLE`/`TRY` en PASS.
-
-## Cobertura de los 29 criterios de aceptación
-Cada criterio tiene al menos un test con aserciones reales; verifiqué que los tests comparan valores exactos (código, stdout/stderr completos, bytes del archivo antes/después, modo con `stat.S_IMODE`, `mtime_ns`) y no pasan en vacío.
-
-| Criterios | Test(s) | Valoración |
-|---|---|---|
-| 1-2, 3, 4, 5 | `test_list_sin_archivo`, `test_add_crea_archivo`, `test_list_formato_y_orden`, `test_done_y_filtros`, `test_remove_no_reutiliza_ids` | Sólidos (formato exacto, orden, idempotencia, no reutilización de ID) |
-| 6, 7, 8 | `test_texto_de_200_y_201_caracteres`, `test_texto_vacio`, `test_texto_con_control` | Sólidos (mensaje exacto, archivo no creado/sin cambios) |
-| 9, 10 | `test_errores_de_uso_codigo_2`, `test_id_inexistente*` | Cubiertos. La decisión sobre `done 0`/`remove -1` (código 2) está documentada en README y build.md |
-| 11, 12 | `test_limite_de_mil_tareas`, `test_acentos_se_conservan` | Cubiertos (el emoji solo se prueba en `test_logica`, no de extremo a extremo) |
-| 13, 14 | `test_precedencia_de_archivo`, `test_resolver_ruta_*`, `test_archivo_por_defecto_en_home`, `test_ruta_*`, `test_symlink_*` | Cubiertos; HOME se redirige a `tmp_path`, ningún test toca el HOME real |
-| 15-20 | `test_json_corrupto`, `test_archivo_vacio_*`, `test_estructura_invalida`, `test_validar_documento_*`, `test_version_2`, `test_archivo_grande_y_no_utf8_y_anidado`, `test_archivo_que_crece_tras_stat` | Cubiertos. Los 12+ casos del criterio 17 se distribuyen entre `test_logica` (parametrizado) y 5 casos en `test_cli` |
-| 21-24 | `test_sin_temporales_y_fallo_de_replace`, `test_permisos_0600`, `test_list_y_done_idempotente_no_escriben`, `test_fallo_de_escritura_limpia_temporal` | Sólidos (parcheo real de `os.replace`/`os.fsync`) |
-| 25-26 | `test_agregar_tarea_*`, `test_marcar_hecha_*`, `test_eliminar_*`, `test_logica_no_importa_io_ni_lee_el_reloj`, `test_ida_y_vuelta` | Cubiertos; el test estático por `ast` es real |
-| 27-28 | `test_help_incluye_archivo_entorno_y_codigos`, `test_subprocess_extremo_a_extremo` | Cubiertos (subprocess con lista de argumentos, sin shell) |
-| 29 | Gate + `ruff format --check` | PASS |
+| Arreglo revertido | Tests que fallan |
+|---|---|
+| `except BrokenPipeError` en `_emitir` | 1 |
+| `reconfigure(errors="replace")` | 1 |
+| Aviso "El cambio sí se guardó" siempre | 1 |
+| `default=SUPPRESS` en `--archivo` | 47 |
+| Mensaje de `list` vacío por filtro | 2 |
+| Rechazo de FIFO | 2 (uno agota el timeout de 30 s) |
+| `texto_seguro` sin filtrar | 5 |
+| Truncado de versión | 2 |
+| Versión validada antes que las claves | 7 |
+| Traducción `unrecognized arguments` | 1 |
+| Traducción `the following arguments are required` | 2 |
+| Título `opciones`, `-h` en español, epílogo con ejemplo | 1 cada uno |
+| **`os.dup2` en `_descartar_stdout`** | **0 (sin cobertura)** |
+| **Traducción `("argument ", "argumento ")`** | **0 (sin cobertura)** |
+| **Traducción `("(choose from ", "(opciones: ")`** | **0 (sin cobertura)** |
+| **Traducción `("expected one argument", ...)`** | **0 (sin cobertura)** |
+| **`texto_seguro` en `almacen.cargar`** | 0 (redundante: `_ruta_invalida` ya escapa; ver nota) |
 
 ## Hallazgos
 
-Ningún BLOQUEANTE. Ningún defecto de correctitud encontrado. Observaciones (no bloquean; el approver decide):
+### CAMBIOS-1: `construir_parser` supera las 50 líneas
+`gestor_tareas/cli.py:108` (def a 159): 52 líneas por `ast`. Rompe el límite de 50 de `CLAUDE.md` por 2. Corrección: extraer la construcción de cada subcomando (p. ej. `_registrar_add(sub, ayuda_archivo)`) o mover los 4 subparsers a una función auxiliar. El gate no lo detecta.
 
-### CAMBIOS menores (recomendados, no críticos)
-1. `apps/gestor-tareas/.github/workflows/quality.yml:1`: GitHub solo ejecuta workflows ubicados en `.github/workflows/` de la raíz del repositorio, por lo que este archivo es inerte en este monorepo. Además asume que `.claude/` está copiado dentro del proyecto. Es una desviación declarada en build.md (por orden expresa), contraria al PRP (sección CI: workflow en la raíz con `quality-gate.sh apps/gestor-tareas`). Corrección: confirmar que el humano acepta la desviación o crear el workflow en la raíz como indicaba el PRP. Hoy no existe gate automático en CI.
-2. `gestor_tareas/logica.py:151-159`: `_validar_cabecera` comprueba las claves de la raíz antes que la versión. Un documento con `version: 2` y un esquema distinto (claves diferentes) se reporta como "estructura inválida" en vez de "versión de esquema 2 no soportada". Con el esquema actual de v1 el criterio 18 se cumple, pero la comprobación de versión debería ir primero cuando `version` existe. Corrección: leer `datos.get("version")` y validar versión antes del conjunto de claves.
-3. `gestor_tareas/modelo.py:13,17`: los `# noqa: N818` llevan código pero el motivo ("nombre fijado por el PRP") describe el origen y no la razón técnica. Alternativa más limpia y alineada con el PRP ("objetivo: cero"): `per-file-ignores` de `N818` solo para `gestor_tareas/modelo.py` en `pyproject.toml` con comentario, o renombrar a `DominioError`/`AlmacenError`. Justificación aceptable tal como está.
+### CAMBIOS-2: parser propio frágil frente a versiones de Python
+`gestor_tareas/cli.py:44-74`. Con 3.11, 3.12 y 3.13 todo pasa (probado). Pero `requires-python = ">=3.11"` no tiene tope y el CI usa solo 3.12:
+- `_Parser.__init__` acepta solo `prog`, `description` y `epilog`. `add_subparsers(parser_class=_Parser)` le pasa los kwargs de `add_parser`; si una versión futura de argparse inyecta otros (hay cambios de color y sugerencias en 3.14, no verificables aquí, no hay 3.14 instalado), fallaría con `TypeError` en cualquier invocación. Corrección: `def __init__(self, **kwargs: Any)` con `add_help=False` y `formatter_class` forzados.
+- `_Formateador.format_help` depende de que la salida empiece por la cadena literal `"usage: "`. Si argparse colorea o cambia el prefijo, el `if` falla en silencio y se vuelve al inglés sin error. El test `test_ayuda_en_espanol` lo detectaría en CI, pero solo en 3.12. Corrección: añadir 3.11 y 3.13 (o la última estable) a la matriz del `quality.yml` plantilla, o usar el gancho `add_usage` del formateador, que es la vía soportada para el prefijo.
+- `TRADUCCIONES` hace `str.replace` sobre texto inglés de CPython, que ha cambiado entre versiones (las comillas de `choose from` cambiaron). Está limitado a fragmentos, falla de forma segura (queda en inglés) y el README lo documenta, así que es mantenible. Se acepta, pero ver CAMBIOS-3.
 
-### Calidad de tests (mejoras opcionales)
-4. `tests/test_logica.py:148-174`: los casos inválidos de `validar_documento` solo afirman el tipo `ErrorDeEstructura`; un caso podría fallar por una razón distinta de la prevista y el test seguiría en verde. Sugerencia: parametrizar con el fragmento de detalle esperado (`match=`).
-5. `tests/test_logica.py:195` / criterio 25: no hay test de no-mutación para `validar_documento` (dict de entrada) ni `documento_a_datos`; los demás sí lo verifican.
-6. `tests/test_almacen.py:126`: `monkeypatch.setattr(almacen, "TAMANO_MAXIMO_ARCHIVO", 1_048_576)` es una asignación del mismo valor, sin efecto; el resto del test (stat falseado) sí ejercita la lectura acotada y es válido. Se puede eliminar la línea.
-7. `tests/test_cli.py:119-123`: para `done 0`/`remove -1` solo se afirma `"usage:"`; conviene afirmar también `ID no válido` para fijar la decisión documentada. El criterio 27 se prueba con `principal(["--help"])` y no con `python -m gestor_tareas --help` como dice el PRP (equivalente funcionalmente).
+### CAMBIOS-3: cobertura incompleta de la tabla `TRADUCCIONES` y de `_descartar_stdout`
+- `cli.py:35-36, 38`: las entradas `"argument "`, `"(choose from "` y `"expected one argument"` pueden borrarse sin que falle ningún test. `test_errores_de_uso_en_espanol` solo comprueba `"opción no válida"` y la ausencia de `invalid choice`. Corrección: afirmar `"(opciones: "` y `"argumento --prioridad"` en el caso de prioridad, y añadir el caso `["list", "--estado"]` con `"se esperaba un valor"`. Es la fragilidad entre versiones que más conviene proteger con tests, porque esas cadenas son las que pueden cambiar.
+- `cli.py:216-221` (`_descartar_stdout`): sustituir el `dup2` por `pass` no rompe nada. `test_dev_full_extremo_a_extremo` no comprueba que stderr esté libre de `Exception ignored ... flush` (sí fija `stderr ==` exacto, pero el vaciado final de Python no escribe ahí en este caso). Los tests con `capsys` omiten el `dup2` por diseño (nota 4 del build). Corrección: en el test de `/dev/full`, afirmar `returncode == 3` con `stderr` exacto (ya está) y añadir otro con salida que no se vacíe hasta el final, o un test con un descriptor real redirigido que compruebe que `/dev/null` sustituye a stdout. Menor, no bloquea.
 
-## Los 3 `# noqa`
-- `modelo.py:13` y `modelo.py:17` (`N818`): justificados (nombres exigidos por el contrato del PRP); ver punto 3.
-- `tests/test_cli.py:311` (`S603`): justificado; `subprocess.run` con lista de argumentos fija, `sys.executable`, sin shell, `check=False` explícito, y es un test requerido por el criterio 28.
-- No hay `# type: ignore`. Número de supresiones coherente con el reporte del Builder.
+### Nota (sin acción): doble saneo de la ruta
+`almacen.py:99, 128` aplican `texto_seguro` a `mostrar` y `_ruta_invalida` lo vuelve a aplicar. Es idempotente y no cambia la salida, solo es redundante. Quitar uno de los dos simplificaría.
 
-## Entorno de herramientas (`requirements-dev.txt`)
-Coherente. Las 5 herramientas (ruff 0.16.9, mypy 2.3.1, pytest 9.1.1, bandit 1.9.4, pip-audit 2.10.1) están fijadas con `==` y coinciden exactamente con las versiones instaladas en `.venv`; todas están en el mismo entorno, necesario para que mypy vea `pytest` al tipar los tests (limitación documentada por el Builder: con `uv tool` aislados, mypy falla en los tests; no es defecto del proyecto). `.venv/` está en `.gitignore`. Sin runtime dependencies. Dependencias transitivas sin fijar y sin hash-pinning: aceptado por el PRP (YAGNI).
+## Sin hallazgos en
+- Regresiones en lógica pura y CLI: el reordenamiento de `_validar_cabecera` conserva los dos mensajes; un entero `bool` queda excluido por `_es_entero`. 144 tests en 3.11/3.12/3.13.
+- `noqa` / `type: ignore`: ninguno nuevo en producción. El único `noqa: S603` en tests (`ayudas.py:33`) es el de siempre, movido de archivo. Los `N818` se retiraron y se cubren con `per-file-ignores` acotado a `modelo.py` y comentado.
+- Reparto de tests: `ayudas.py` (43), `conftest.py` (16), `test_cli_robustez.py` (213), `test_cli.py` (294). Sin duplicación relevante.
+- PRP coherente con código y tests: criterios 30 a 36, tabla de mensajes, código 3 ampliado y nota de CI coinciden con lo implementado. El CI queda declarado como inerte en el monorepo y el README lo dice.
+- Manejo de errores en salida: `BrokenPipeError` -> 0 en silencio; otro `OSError` -> 3 con aviso de guardado; `_escribir_error` suprime fallos de stderr.
 
-## Veredicto
-El código cumple los criterios del PRP, el gate está en PASS y las herramientas pasan en limpio en 3.11, 3.12 y 3.13. Las observaciones son menores; el punto 1 (CI inerte) queda a decisión del approver/humano por ser una desviación consciente.
+## Resumen
+Los arreglos de la iteración 2 funcionan y casi todos tienen un test que falla sin ellos, con las excepciones de CAMBIOS-3. No hay defecto que impida producción. Pendientes: recortar `construir_parser` a 50 líneas, endurecer `_Parser.__init__` con `**kwargs` y los tests de traducciones.
 
-VEREDICTO: APROBADO
+VEREDICTO: CAMBIOS

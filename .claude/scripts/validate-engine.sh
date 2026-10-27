@@ -36,6 +36,7 @@ ok "Rutas .claude/ referenciadas existen"
 python3 -c "import json; json.load(open('.claude/settings.json'))" 2>/dev/null || fail ".claude/settings.json no es JSON válido"
 hook=$(grep -oE '\.claude/hooks/[A-Za-z0-9_.-]+\.sh' .claude/settings.json | head -n 1)
 { [ -n "$hook" ] && [ -x "$hook" ]; } || fail "El hook registrado no existe o no es ejecutable"
+grep -q "CLAUDE_PROJECT_DIR" "$hook" || fail "$hook debe anclarse a CLAUDE_PROJECT_DIR (si no, crea .claude/logs en el directorio de trabajo)"
 ok "Skills y hook consistentes"
 
 # 6. Todos los archivos de reglas apuntan a CLAUDE.md y mencionan Factory

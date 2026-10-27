@@ -10,6 +10,7 @@ Aplica a todo proyecto creado con este motor. Está pensado para que la calidad 
 |---|---|---|
 | `secretos` | Sin credenciales ni `.env` versionado | FAIL |
 | `tamano` | Archivos ≤ 500 líneas (mantenibilidad) | FAIL |
+| `funciones` | Funciones de Python ≤ 50 líneas (en JS/TS configura `max-lines-per-function: 50` en ESLint) | FAIL |
 | `patrones-peligrosos` | Sin `eval`, `innerHTML`, `shell=True`, `verify=False`, etc. | FAIL |
 | `tests-*` | Hay tests y pasan | FAIL (sin tests = FAIL) |
 | `lint-*` | Linter del stack sin errores (ESLint/Biome, Ruff) | FAIL; sin linter = UNVERIFIED |
