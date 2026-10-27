@@ -1,6 +1,6 @@
 # Decision: calculadora-propinas (iteracion 2)
 
-PRP: PRPs/calculadora-propinas-2026-10-25.md | Riesgo: bajo | Rama: factory/calculadora-propinas
+PRP: examples/calculadora-propinas/prp.md | Riesgo: bajo | Rama: examples/calculadora-propinas/run
 
 ## Historial
 - Iteracion 1: RECHAZADO. Sin BLOQUEANTES, pero UX y UI con CAMBIOS (contraste de bordes, texto guia contradictorio, errores sin anuncio, tildes). Devuelto al builder con 4 puntos obligatorios.
@@ -16,7 +16,7 @@ PRP: PRPs/calculadora-propinas-2026-10-25.md | Riesgo: bajo | Rama: factory/calc
 Los 4 reportes existen y fueron sobrescritos en la iteracion 2. Sin BLOQUEANTES ni CAMBIOS pendientes.
 
 ## Validaciones ejecutadas por el Approver
-- `node --test apps/calculadora-propinas/*.test.js`: 33 tests, 33 pass, 0 fail.
+- `node --test examples/calculadora-propinas/app/*.test.js`: 33 tests, 33 pass, 0 fail.
 - grep de sinks peligrosos en calculator.js y ui.js: sin coincidencias.
 - grep `https?://` en la app: sin coincidencias.
 - Archivos en la app: los 5 del PRP, sin extras.

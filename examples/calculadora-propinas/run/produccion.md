@@ -3,7 +3,7 @@
 Estado: **listo para despliegue, pendiente de confirmación humana.** Riesgo: bajo. Decisión: `APROBADO_AUTO` (ver `decision.md`).
 
 ## Artefacto a desplegar
-- Carpeta estática `apps/calculadora-propinas/` (`index.html`, `styles.css`, `calculator.js`, `ui.js`). `calculator.test.js` no es necesario en el servidor.
+- Carpeta estática `examples/calculadora-propinas/app/` (`index.html`, `styles.css`, `calculator.js`, `ui.js`). `calculator.test.js` no es necesario en el servidor.
 - Sin build, sin dependencias, sin backend.
 
 ## Checklist previo
@@ -11,7 +11,7 @@ Estado: **listo para despliegue, pendiente de confirmación humana.** Riesgo: ba
 - [ ] Prueba manual solo con teclado, de extremo a extremo.
 - [ ] Prueba con un lector de pantalla real (los errores usan `aria-live="polite"`).
 - [ ] Contraste confirmado con herramienta en ambos temas (calculado: borde de controles >= 4.19:1).
-- [ ] `node --test apps/calculadora-propinas/*.test.js` en verde (33/33 en la última corrida).
+- [ ] `node --test examples/calculadora-propinas/app/*.test.js` en verde (33/33 en la última corrida).
 - [ ] Consola y Network limpias en el entorno real (no debe haber peticiones externas).
 
 ## Configuración de despliegue

@@ -1,6 +1,6 @@
 # Review de seguridad: calculadora-propinas (iteración 2)
 
-Alcance: `git diff 1a6e9af..HEAD` (ui.js, calculator.js, calculator.test.js, index.html, styles.css, PRP) más el estado final de apps/calculadora-propinas/.
+Alcance: `git diff 1a6e9af..HEAD` (ui.js, calculator.js, calculator.test.js, index.html, styles.css, PRP) más el estado final de examples/calculadora-propinas/app/.
 
 ## Cambios de la iteración revisados
 - ui.js: nuevas constantes de mensaje fijas (EMPTY_BILL, EMPTY_FIX) escritas con `textContent`; `syncShortcuts` usa `setAttribute('aria-pressed', String(...))` comparando `dataset.tip` con el valor recortado. Sin innerHTML, eval ni eco de la entrada del usuario.

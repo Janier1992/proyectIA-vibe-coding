@@ -1,9 +1,9 @@
 # Review de Codigo (iteracion 2): calculadora-propinas
 
-Rama: factory/calculadora-propinas | PRP: PRPs/calculadora-propinas-2026-10-25.md | Riesgo: bajo
+Rama: examples/calculadora-propinas/run | PRP: examples/calculadora-propinas/prp.md | Riesgo: bajo
 
 ## Validacion ejecutada (real)
-- `node --test apps/calculadora-propinas/*.test.js`: 33 tests, 33 pass, 0 fail.
+- `node --test examples/calculadora-propinas/app/*.test.js`: 33 tests, 33 pass, 0 fail.
 - `node --check` calculator.js, ui.js, calculator.test.js: OK.
 - grep de sinks (innerHTML, outerHTML, insertAdjacentHTML, document.write, eval(, new Function) en calculator.js y ui.js: sin coincidencias.
 - grep `https?://` en la app: sin coincidencias.

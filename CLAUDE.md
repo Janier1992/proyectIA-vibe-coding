@@ -87,6 +87,15 @@ Este kit contiene comandos agénticos listos para ser invocados en la línea de 
 
 ---
 
+## 🧱 Integridad del Motor (Kit Genérico)
+
+- **El kit es agnóstico al stack**: nada en `.claude/`, `.agents/` ni en los archivos de reglas puede depender de un proyecto o ejemplo concreto.
+- **`PRPs/` y `factory/` son carpetas de salida**: en el kit permanecen vacías (solo `.gitkeep`); los ejemplos de referencia viven en `examples/`.
+- **Fuente única**: las skills están en `.claude/skills/` (`.agents/skills` es un symlink) y las reglas globales en este archivo; `.cursorrules`, `.windsurfrules` y `.agents/AGENTS.md` solo las reflejan.
+- **Validación obligatoria**: tras cambiar agentes, comandos, plantillas, skills o reglas, ejecuta `bash .claude/scripts/validate-engine.sh` (también corre en CI). Debe terminar en `Motor consistente`.
+
+---
+
 ## ❌ Prácticas Prohibidas (Critical Anti-Patterns)
 
 - ❌ **No ignorar fallos de tipos o de compilación**: No dejes warnings o errores de linting sin corregir.

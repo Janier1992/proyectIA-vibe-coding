@@ -11,6 +11,7 @@ Contiene las instrucciones de contexto, agentes especializados, comandos persona
 ```
 proyectIA-vibe-coding/
 ├── .claude/                   # Motor agéntico para Claude Code
+│   ├── scripts/validate-engine.sh # Valida la consistencia del propio motor
 │   ├── PRPs/                  # Historial y plantillas de Requerimientos de Producto
 │   │   └── templates/
 │   │       ├── prp_base.md        # Plantilla genérica base
@@ -30,9 +31,10 @@ proyectIA-vibe-coding/
 │   ├── AGENTS.md              # Reglas globales de codificación leídas por Gemini
 │   └── skills/                # Symlink a .claude/skills (fuente única)
 ├── PRPs/                      # PRPs generados con /generar-prp
-├── apps/                      # Apps generadas por /factory
-│   └── calculadora-propinas/  # Ejemplo de corrida Factory
-├── factory/                   # Artefactos de cada corrida de /factory
+├── factory/                   # Artefactos de cada corrida de /factory (vacía en el kit)
+├── examples/                  # Ejemplos de referencia (no se copian a tus proyectos)
+│   └── calculadora-propinas/  # Corrida Factory completa: app/, prp.md y run/
+├── .github/workflows/         # CI que valida la consistencia del motor
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
 ├── .windsurfrules             # Reglas para Cascade en Windsurf
@@ -47,7 +49,7 @@ proyectIA-vibe-coding/
 Cuando vayas a iniciar un nuevo proyecto tecnológico asistido por Inteligencia Artificial, sigue estos sencillos pasos:
 
 1. **Crea el directorio de tu nuevo proyecto** e inicializa tu repositorio Git si es necesario.
-2. **Copia las carpetas `.claude/` y `.agents/`**, junto con los archivos de la raíz (`CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `README.md` y `example.mcp.json`) en la raíz de tu nuevo proyecto.
+2. **Copia las carpetas `.claude/` y `.agents/`**, junto con los archivos de la raíz (`CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `README.md` y `example.mcp.json`) en la raíz de tu nuevo proyecto. No necesitas copiar `examples/`; `PRPs/` y `factory/` se crean solas al usar `/generar-prp` y `/factory`.
 3. **Inicializa tu stack con un comando**: Escribe `/bootstrap nextjs`, `/bootstrap python` o `/bootstrap expo` para que la IA genere el andamiaje inicial del stack de forma automatizada.
 4. **Instala tus servidores MCP** preferidos utilizando la plantilla `example.mcp.json`. Por ejemplo, Playwright MCP te servirá para que el agente realice validaciones visuales del frontend.
 5. **¡Comienza a programar de la mano con tu IA!** Pídele a tu IA que use el comando `/primer` al comenzar una nueva conversación para que entienda rápidamente tu entorno de trabajo.
@@ -73,7 +75,7 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 
 Los artefactos de cada corrida quedan en `factory/[feature]/`.
 
-Ejemplo: [`calculadora-propinas`](factory/calculadora-propinas/) (app en [`apps/calculadora-propinas/`](apps/calculadora-propinas/README.md)).
+Ejemplo: [`calculadora-propinas`](examples/calculadora-propinas/run/) (app en [`examples/calculadora-propinas/app/`](examples/calculadora-propinas/app/README.md)).
 
 ### Lecciones de la primera corrida
 

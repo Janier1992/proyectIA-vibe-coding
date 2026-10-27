@@ -1,9 +1,9 @@
 # PRP: Calculadora de Propinas
 
-Fecha: 2026-10-25 | Rama: `factory/calculadora-propinas` | Plantilla: `prp_frontend.md` | Tipo: software
+Fecha: 2026-10-25 | Rama: `examples/calculadora-propinas/run` | Plantilla: `prp_frontend.md` | Tipo: software
 
 ## Goal
-Página web estática (HTML/CSS/JS vanilla, cero dependencias, sin build) en `apps/calculadora-propinas/`. El usuario ingresa monto de la cuenta, porcentaje de propina y número de personas, y ve en tiempo real: propina total, total a pagar y monto por persona. Las entradas inválidas se validan y se comunican con mensajes claros. La lógica de cálculo es pura, exportable a Node (tests con `node:test`) y usable en el navegador.
+Página web estática (HTML/CSS/JS vanilla, cero dependencias, sin build) en `examples/calculadora-propinas/app/`. El usuario ingresa monto de la cuenta, porcentaje de propina y número de personas, y ve en tiempo real: propina total, total a pagar y monto por persona. Las entradas inválidas se validan y se comunican con mensajes claros. La lógica de cálculo es pura, exportable a Node (tests con `node:test`) y usable en el navegador.
 
 ## Nivel de riesgo: bajo
 Justificación: app estática del lado cliente, sin auth, pagos, datos personales, red, almacenamiento, migraciones ni infraestructura. El único riesgo relevante es de corrección numérica (redondeo de dinero) y de XSS si se usara `innerHTML`, ambos cubiertos abajo.
@@ -25,7 +25,7 @@ Justificación: app estática del lado cliente, sin auth, pagos, datos personale
 
 ## Estructura de archivos
 ```
-apps/calculadora-propinas/
+examples/calculadora-propinas/app/
   index.html            # marcado semántico, carga styles.css y scripts
   styles.css            # tokens HSL, claro/oscuro, responsive
   calculator.js         # lógica pura (sin DOM), UMD mínimo: module.exports en Node, window.TipCalculator en navegador
@@ -57,7 +57,7 @@ Reglas de cálculo y redondeo:
 
 ## Success Criteria / Criterios de aceptación (verificables)
 Lógica (automatizable con `node --test`):
-- [ ] `node --test apps/calculadora-propinas/*.test.js` termina con código 0 y 0 fallos.
+- [ ] `node --test examples/calculadora-propinas/app/*.test.js` termina con código 0 y 0 fallos.
 - [ ] Caso base: bill 100, tip 15, people 1 -> tipTotal 15.00, total 115.00, perPerson 115.00.
 - [ ] Caso dividido: bill 200, tip 10, people 4 -> tipTotal 20.00, total 220.00, perPerson 55.00.
 - [ ] Propina 0%: bill 50, tip 0, people 2 -> tipTotal 0, total 50, perPerson 25.
@@ -73,7 +73,7 @@ UI (verificación manual / inspección de código):
 - [ ] Al abrir `index.html` (doble clic o servidor estático) sin consola de errores, se ve el estado vacío (sin resultados ni errores).
 - [ ] Cambiar cualquier campo recalcula al instante (evento `input`) sin recargar.
 - [ ] Entrada inválida muestra mensaje junto al campo, oculta resultados y no muestra `NaN`, `Infinity` ni `undefined` en ningún caso.
-- [ ] `grep -nE "innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function" apps/calculadora-propinas/*.js` no devuelve coincidencias en código de producto.
+- [ ] `grep -nE "innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function" examples/calculadora-propinas/app/*.js` no devuelve coincidencias en código de producto.
 - [ ] Layout correcto sin scroll horizontal en 375px, 768px y 1440px.
 - [ ] Contraste >= 4.5:1 en texto normal en ambos temas.
 - [ ] Todo operable solo con teclado, con foco visible.
@@ -110,25 +110,25 @@ UI (verificación manual / inspección de código):
 ## Tareas de implementación (orden secuencial)
 ```yaml
 Task 1: Lógica pura
-  CREATE: apps/calculadora-propinas/calculator.js
+  CREATE: examples/calculadora-propinas/app/calculator.js
   CONTENT: parseNumber, validateInputs, calculateTip, constantes de límites; aritmética en centavos; export dual (module.exports si existe `module`, si no window.TipCalculator).
-  VALIDATE: node -e "const c=require('./apps/calculadora-propinas/calculator.js'); console.log(c.calculateTip({bill:100,tipPercent:15,people:1}))"
+  VALIDATE: node -e "const c=require('./examples/calculadora-propinas/app/calculator.js'); console.log(c.calculateTip({bill:100,tipPercent:15,people:1}))"
 
 Task 2: Tests unitarios
-  CREATE: apps/calculadora-propinas/calculator.test.js
+  CREATE: examples/calculadora-propinas/app/calculator.test.js
   CONTENT: casos de la sección Criterios de aceptación (lógica) con node:test + node:assert/strict.
-  VALIDATE: node --test apps/calculadora-propinas/*.test.js (0 fallos)
+  VALIDATE: node --test examples/calculadora-propinas/app/*.test.js (0 fallos)
 
 Task 3: Marcado
-  CREATE: apps/calculadora-propinas/index.html
+  CREATE: examples/calculadora-propinas/app/index.html
   CONTENT: estructura semántica (main, h1, form novalidate, labels, mensajes de error por campo con ids, región de resultados, botón Limpiar, atajos), meta viewport, CSP, lang="es", carga de styles.css, calculator.js y luego ui.js (script con defer, sin inline).
 
 Task 4: Estilos
-  CREATE: apps/calculadora-propinas/styles.css
+  CREATE: examples/calculadora-propinas/app/styles.css
   CONTENT: tokens HSL claro/oscuro, layout responsive mobile-first, estados focus/error/hover/disabled, reduced-motion.
 
 Task 5: Capa DOM
-  CREATE: apps/calculadora-propinas/ui.js
+  CREATE: examples/calculadora-propinas/app/ui.js
   CONTENT: leer inputs, llamar a TipCalculator.validateInputs/calculateTip, renderizar solo con textContent, gestionar estados vacío/error/resultado, aria-invalid/aria-describedby, atajos, Limpiar y foco. Sin lógica de negocio duplicada (DRY).
 
 Task 6: Verificación final
@@ -138,26 +138,26 @@ Task 6: Verificación final
 ## Comandos de validación
 ```bash
 # 1. Tests unitarios (requisito principal; Node 22)
-node --test apps/calculadora-propinas/*.test.js
+node --test examples/calculadora-propinas/app/*.test.js
 
 # 2. Sintaxis de cada archivo JS
-node --check apps/calculadora-propinas/calculator.js
-node --check apps/calculadora-propinas/ui.js
-node --check apps/calculadora-propinas/calculator.test.js
+node --check examples/calculadora-propinas/app/calculator.js
+node --check examples/calculadora-propinas/app/ui.js
+node --check examples/calculadora-propinas/app/calculator.test.js
 
 # 3. Seguridad: sin sinks peligrosos en código de producto (debe no devolver nada)
 grep -nE "innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function" \
-  apps/calculadora-propinas/calculator.js apps/calculadora-propinas/ui.js
+  examples/calculadora-propinas/app/calculator.js examples/calculadora-propinas/app/ui.js
 
 # 4. Sin dependencias ni recursos externos (debe no devolver nada)
-grep -nE "https?://" apps/calculadora-propinas/index.html apps/calculadora-propinas/styles.css apps/calculadora-propinas/ui.js apps/calculadora-propinas/calculator.js
-ls apps/calculadora-propinas/ | grep -E "node_modules|package-lock" ; true
+grep -nE "https?://" examples/calculadora-propinas/app/index.html examples/calculadora-propinas/app/styles.css examples/calculadora-propinas/app/ui.js examples/calculadora-propinas/app/calculator.js
+ls examples/calculadora-propinas/app/ | grep -E "node_modules|package-lock" ; true
 
 # 5. Límites de tamaño (cada archivo < 500 líneas)
-wc -l apps/calculadora-propinas/*
+wc -l examples/calculadora-propinas/app/*
 
 # 6. Verificación visual y funcional (servidor estático sin dependencias)
-python3 -m http.server 8080 --directory apps/calculadora-propinas
+python3 -m http.server 8080 --directory examples/calculadora-propinas/app
 # Abrir http://localhost:8080 y comprobar: 375px, 768px, 1440px; tema claro y oscuro
 # (emulación prefers-color-scheme en DevTools); navegación solo con Tab/Enter/Espacio;
 # consola sin errores; Network sin peticiones externas.
@@ -172,4 +172,4 @@ Nota: el repo no tiene linter ni tipos configurados; el builder no debe añadir 
 - Valores muy grandes que desbordan el layout: acotados por `MAX_*`; el CSS debe permitir `overflow-wrap: anywhere` en resultados.
 
 ## Definición de terminado
-Todos los criterios de aceptación marcados, comandos 1-5 sin fallos ni coincidencias indebidas, verificación visual del punto 6 realizada, y los cinco archivos presentes en `apps/calculadora-propinas/` sin archivos extra.
+Todos los criterios de aceptación marcados, comandos 1-5 sin fallos ni coincidencias indebidas, verificación visual del punto 6 realizada, y los cinco archivos presentes en `examples/calculadora-propinas/app/` sin archivos extra.
