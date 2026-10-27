@@ -5,10 +5,10 @@ import contextlib
 import io
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import NoReturn
+from typing import NoReturn, TypedDict, Unpack
 
 from gestor_tareas import almacen, logica
 from gestor_tareas.modelo import (
@@ -26,6 +26,7 @@ SALIDA_DOMINIO = 1
 SALIDA_USO = 2
 SALIDA_ALMACEN = 3
 MAX_MOTIVO = 100
+PREFIJO_USO = "uso: "
 
 EPILOGO = f"""\
 Archivo de datos (precedencia): --archivo > variable de entorno
@@ -55,27 +56,36 @@ TRADUCCIONES = (
 class _Formateador(argparse.RawDescriptionHelpFormatter):
     """Igual que RawDescriptionHelpFormatter pero con el prefijo de uso en español."""
 
-    def format_help(self) -> str:
-        ayuda = super().format_help()
-        return "uso: " + ayuda[len("usage: ") :] if ayuda.startswith("usage: ") else ayuda
+    def add_usage(
+        self,
+        usage: str | None,
+        actions: Iterable[argparse.Action],
+        groups: Iterable[argparse._MutuallyExclusiveGroup],
+        prefix: str | None = None,
+    ) -> None:
+        super().add_usage(usage, actions, groups, PREFIJO_USO if prefix is None else prefix)
+
+
+class _OpcionesParser(TypedDict, total=False):
+    """Argumentos de ArgumentParser que _Parser acepta (add_help y formatter_class se fuerzan)."""
+
+    prog: str
+    usage: str
+    description: str
+    epilog: str
+    allow_abbrev: bool
+    exit_on_error: bool
+    add_help: bool
+    formatter_class: type[argparse.HelpFormatter]
 
 
 class _Parser(argparse.ArgumentParser):
     """ArgumentParser con ayuda y errores en español."""
 
-    def __init__(
-        self,
-        prog: str | None = None,
-        description: str | None = None,
-        epilog: str | None = None,
-    ) -> None:
-        super().__init__(
-            prog=prog,
-            description=description,
-            epilog=epilog,
-            add_help=False,
-            formatter_class=_Formateador,
-        )
+    def __init__(self, **kwargs: Unpack[_OpcionesParser]) -> None:
+        kwargs["add_help"] = False
+        kwargs["formatter_class"] = _Formateador
+        super().__init__(**kwargs)
         self._positionals.title = "argumentos posicionales"
         self._optionals.title = "opciones"
         self.add_argument("-h", "--help", action="help", help="muestra esta ayuda y termina")
@@ -104,57 +114,65 @@ def _archivo_en_subcomando(parser: argparse.ArgumentParser, ayuda: str) -> None:
     parser.add_argument("--archivo", metavar="RUTA", default=argparse.SUPPRESS, help=ayuda)
 
 
-def construir_parser() -> argparse.ArgumentParser:
-    """Construye el parser con sus subcomandos."""
-    ayuda_archivo = (
+def _ayuda_archivo() -> str:
+    return (
         f"archivo JSON de tareas (por defecto: ${almacen.VARIABLE_ENTORNO} o "
         f"~/{almacen.NOMBRE_POR_DEFECTO}); puede ir antes o después del subcomando"
     )
-    parser = _Parser(
-        prog=PROGRAMA,
-        description="Gestiona una lista personal de tareas en un archivo JSON local.",
-        epilog=EPILOGO,
+
+
+def _subcomando(
+    sub: "argparse._SubParsersAction[_Parser]",
+    nombre: str,
+    ayuda: str,
+    ejemplo: str,
+) -> argparse.ArgumentParser:
+    """Crea un subcomando con su ayuda, su ejemplo y --archivo."""
+    parser = sub.add_parser(nombre, help=ayuda, epilog=f"Ejemplo:\n  {PROGRAMA} {ejemplo}")
+    _archivo_en_subcomando(parser, _ayuda_archivo())
+    return parser
+
+
+def _registrar_add(sub: "argparse._SubParsersAction[_Parser]") -> None:
+    parser = _subcomando(
+        sub, "add", "añade una tarea pendiente", 'add "Pagar luz" --prioridad alta'
     )
-    parser.add_argument("--archivo", metavar="RUTA", help=ayuda_archivo)
-    sub = parser.add_subparsers(
-        dest="comando", required=True, metavar="COMANDO", parser_class=_Parser
-    )
-    agregar = sub.add_parser(
-        "add",
-        help="añade una tarea pendiente",
-        epilog=f'Ejemplo:\n  {PROGRAMA} add "Pagar luz" --prioridad alta',
-    )
-    _archivo_en_subcomando(agregar, ayuda_archivo)
-    agregar.add_argument("texto", help="texto de la tarea (máximo 200 caracteres)")
-    agregar.add_argument(
+    parser.add_argument("texto", help="texto de la tarea (máximo 200 caracteres)")
+    parser.add_argument(
         "--prioridad", choices=PRIORIDADES, default="media", help="prioridad (por defecto: media)"
     )
-    listar = sub.add_parser(
-        "list",
-        help="lista tareas ordenadas por ID",
-        epilog=f"Ejemplo:\n  {PROGRAMA} list --estado todas",
-    )
-    _archivo_en_subcomando(listar, ayuda_archivo)
-    listar.add_argument(
+
+
+def _registrar_list(sub: "argparse._SubParsersAction[_Parser]") -> None:
+    parser = _subcomando(sub, "list", "lista tareas ordenadas por ID", "list --estado todas")
+    parser.add_argument(
         "--estado",
         choices=(*ESTADOS, "todas"),
         default="pendiente",
         help="estado a mostrar (por defecto: pendiente)",
     )
-    hecha = sub.add_parser(
-        "done",
-        help="marca una tarea como hecha",
-        epilog=f"Ejemplo:\n  {PROGRAMA} done 3",
+
+
+def _registrar_con_id(sub: "argparse._SubParsersAction[_Parser]", nombre: str, ayuda: str) -> None:
+    parser = _subcomando(sub, nombre, ayuda, f"{nombre} 3")
+    parser.add_argument("id", type=_id_valido, help="ID de la tarea (entero >= 1)")
+
+
+def construir_parser() -> argparse.ArgumentParser:
+    """Construye el parser con sus subcomandos."""
+    parser = _Parser(
+        prog=PROGRAMA,
+        description="Gestiona una lista personal de tareas en un archivo JSON local.",
+        epilog=EPILOGO,
     )
-    _archivo_en_subcomando(hecha, ayuda_archivo)
-    hecha.add_argument("id", type=_id_valido, help="ID de la tarea (entero >= 1)")
-    quitar = sub.add_parser(
-        "remove",
-        help="elimina una tarea",
-        epilog=f"Ejemplo:\n  {PROGRAMA} remove 3",
+    parser.add_argument("--archivo", metavar="RUTA", help=_ayuda_archivo())
+    sub = parser.add_subparsers(
+        dest="comando", required=True, metavar="COMANDO", parser_class=_Parser
     )
-    _archivo_en_subcomando(quitar, ayuda_archivo)
-    quitar.add_argument("id", type=_id_valido, help="ID de la tarea (entero >= 1)")
+    _registrar_add(sub)
+    _registrar_list(sub)
+    _registrar_con_id(sub, "done", "marca una tarea como hecha")
+    _registrar_con_id(sub, "remove", "elimina una tarea")
     return parser
 
 

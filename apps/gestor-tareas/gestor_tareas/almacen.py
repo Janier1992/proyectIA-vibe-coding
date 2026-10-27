@@ -35,7 +35,7 @@ def texto_seguro(texto: str) -> str:
 
 
 def _ruta_invalida(texto: str, motivo: str) -> ErrorDeAlmacen:
-    return ErrorDeAlmacen(f"ruta de archivo no válida '{texto_seguro(texto)}': {motivo}.")
+    return ErrorDeAlmacen(f"ruta de archivo no válida '{texto}': {motivo}.")
 
 
 def resolver_ruta(archivo: str | None, entorno: Mapping[str, str]) -> Path:
@@ -44,9 +44,9 @@ def resolver_ruta(archivo: str | None, entorno: Mapping[str, str]) -> Path:
     if texto is None:
         return Path.home() / NOMBRE_POR_DEFECTO
     if not texto.strip():
-        raise _ruta_invalida(texto, "la ruta está vacía")
+        raise _ruta_invalida(texto_seguro(texto), "la ruta está vacía")
     if "\x00" in texto:
-        raise _ruta_invalida(texto.replace("\x00", ""), "contiene un byte nulo")
+        raise _ruta_invalida(texto_seguro(texto.replace("\x00", "")), "contiene un byte nulo")
     return Path(texto).expanduser().absolute()
 
 

@@ -82,3 +82,24 @@ CI inerte (decisión del Approver): no se creó workflow en la raíz ni se movi�
 4. El `dup2` de stdout a `/dev/null` tras un fallo de escritura se omite en silencio si stdout no tiene descriptor (pytest/capsys).
 5. Código de salida 0 para `BrokenPipeError` (decisión del Builder: patrón `| head`); el Approver no fijó un código.
 6. Siguen abiertos los opcionales (c) y el CI sin ejecución automática en el monorepo (confirmación humana en la revisión del PR).
+
+## Iteración 3 (última)
+
+Aplicados los obligatorios (a) y los recomendados (b) de `decision.md` (iteración 2); (c) queda fuera.
+
+| # | Punto | Cambio | Test que falla sin él (mutación comprobada) |
+|---|---|---|---|
+| 1 | `construir_parser` > 50 líneas | Helpers `_ayuda_archivo`, `_subcomando`, `_registrar_add`, `_registrar_list`, `_registrar_con_id`; `construir_parser` queda en unas 20 líneas, mismo comportamiento | Gate `funciones` en PASS; los 144 tests previos siguen en verde |
+| 2 | `_Parser.__init__` | `**kwargs: Unpack[_OpcionesParser]` (TypedDict, sin `Any`); fuerza `add_help=False` y `formatter_class=_Formateador` | `test_parser_ignora_kwargs_que_chocan_con_su_configuracion`; sin forzar `add_help` fallan 74 tests, sin `formatter_class` fallan 11 |
+| 3 | Tests de `TRADUCCIONES` | `test_traduccion_de_opciones_y_argumento` (`(opciones: `, `argumento --prioridad`), `test_traduccion_de_valor_esperado` (`list --estado`) | Borrar cada entrada de la tabla hace fallar al menos un test |
+| 4 | Literal `"usage: "` | `_Formateador.add_usage` pasa `PREFIJO_USO = "uso: "` al formateador base; se elimina `format_help` (ya no hay degradación silenciosa a inglés) | `test_formato_de_uso_en_espanol_sin_pasar_por_format_help`, `test_errores_de_uso_muestran_uso_en_espanol` (también el uso que imprime `error()`); sin el gancho fallan 11 |
+| 5 | `dup2` en `_descartar_stdout` | Sin cambio de código | `test_descartar_stdout_apunta_el_descriptor_a_dev_null` (descriptor real; comprueba `st_rdev` de `/dev/null`); sustituir `dup2` por `pass` lo hace fallar |
+| 6 | Doble saneo de ruta | `_ruta_invalida` ya no sanea; `resolver_ruta` sanea en sus dos llamadas con texto crudo (`cargar`/`guardar` ya reciben texto seguro). Salida idéntica | `test_ruta_con_escape_*` (existentes) |
+
+Resultados reales:
+- `pytest -q`: 150 passed (antes 144). También 150 passed en Python 3.11, 3.12 y 3.13 (venvs fuera del repo).
+- `ruff check .` y `ruff format --check .`: OK. `mypy .` estricto: sin errores. `bandit`: sin hallazgos.
+- Gate desde la raíz: **GATE: PASS (fallos: 0, sin verificar: 0)**, 9/9 incluida `funciones`.
+- Sin `noqa` ni `type: ignore` nuevos; ninguna función ni archivo supera los límites.
+
+Desviaciones: ninguna. Con el gancho `add_usage` no hizo falta ampliar la matriz de `quality.yml`.

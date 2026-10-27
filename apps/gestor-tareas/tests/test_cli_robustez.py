@@ -1,5 +1,6 @@
 """Tests de robustez de la CLI: salida rota, --archivo, ayuda, rutas (criterios 30-36)."""
 
+import argparse
 import json
 import os
 import sys
@@ -211,3 +212,60 @@ def test_help_por_subprocess_en_espanol() -> None:
     assert proceso.returncode == 0
     for esperado in ("--archivo", "GESTOR_TAREAS_ARCHIVO", "Códigos de salida", "uso:"):
         assert esperado in proceso.stdout
+
+
+def test_traduccion_de_opciones_y_argumento(entorno: Entorno) -> None:
+    _, _, err = entorno.main("add", "x", "--prioridad", "urgente")
+    assert "argumento --prioridad: opción no válida: 'urgente' (opciones: " in err
+    assert "choose from" not in err
+    assert "argument --prioridad" not in err
+
+
+def test_traduccion_de_valor_esperado(entorno: Entorno) -> None:
+    codigo, _, err = entorno.main("list", "--estado")
+    assert codigo == 2
+    assert "argumento --estado: se esperaba un valor" in err
+    assert "expected one argument" not in err
+
+
+def test_errores_de_uso_muestran_uso_en_espanol(entorno: Entorno) -> None:
+    _, _, err = entorno.main("add")
+    assert err.startswith("uso: ")
+    assert "usage:" not in err
+
+
+def test_formato_de_uso_en_espanol_sin_pasar_por_format_help() -> None:
+    parser = cli.construir_parser()
+    assert parser.format_usage().startswith("uso: ")
+    sub = parser.parse_args(["add", "x"])
+    assert sub.comando == "add"
+
+
+def test_parser_ignora_kwargs_que_chocan_con_su_configuracion() -> None:
+    parser = cli._Parser(
+        prog="p", add_help=True, formatter_class=argparse.HelpFormatter, allow_abbrev=False
+    )
+    ayuda = parser.format_help()
+    assert ayuda.startswith("uso: ")
+    assert "muestra esta ayuda y termina" in ayuda
+
+
+@POSIX
+def test_descartar_stdout_apunta_el_descriptor_a_dev_null(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    destino = tmp_path / "salida.txt"
+    descriptor = os.open(destino, os.O_WRONLY | os.O_CREAT)
+
+    class Falso:
+        def fileno(self) -> int:
+            return descriptor
+
+    monkeypatch.setattr(sys, "stdout", Falso())
+    try:
+        cli._descartar_stdout()
+        os.write(descriptor, b"perdido")
+        assert os.fstat(descriptor).st_rdev == Path(os.devnull).stat().st_rdev
+    finally:
+        os.close(descriptor)
+    assert destino.read_bytes() == b""
