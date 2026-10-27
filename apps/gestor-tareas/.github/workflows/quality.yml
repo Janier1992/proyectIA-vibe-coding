@@ -1,0 +1,30 @@
+# CI de calidad y seguridad de gestor-tareas.
+# Adaptado de .claude/templates/ci-quality.yml: el proyecto es la raíz y se asume que
+# la carpeta .claude/ del motor (scripts/quality-gate.sh) se copió dentro del proyecto.
+# Recomendado: proteger la rama principal exigiendo el check "Quality gate".
+name: Quality gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias y herramientas de calidad
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Quality gate
+        run: bash .claude/scripts/quality-gate.sh . --out quality-gate.md
+      - name: Publicar reporte
+        if: always()
+        run: cat quality-gate.md >> "$GITHUB_STEP_SUMMARY"
