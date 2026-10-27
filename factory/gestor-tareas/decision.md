@@ -1,54 +1,57 @@
-# Decision: gestor-tareas (iteración 2)
+# Decision: gestor-tareas (iteración 3, última)
 
-Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Riesgo declarado: **bajo** (CLI local, sin red, auth, pagos, datos personales, migraciones ni infraestructura).
+Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Riesgo declarado: **bajo** (CLI local, sin red, auth, pagos, datos personales, migraciones ni infraestructura). Reconfirmado: el diff no añade nada de esas categorías.
 
 ## Historial
-- **Iteración 1: RECHAZADO.** UX con 4 CAMBIOS confirmados (`--archivo` tras el subcomando, traza ante salida rota o ascii, `list` vacío por filtro, ayuda en inglés), más 2 observaciones de seguridad (ESC crudo en rutas, FIFO colgado). Gate en PASS. El builder los corrigió en la iteración 2 (144 tests en 3.11/3.12/3.13).
-- **Iteración 2: ver abajo.**
+- **Iteración 1: RECHAZADO.** UX con 4 CAMBIOS (`--archivo` tras el subcomando, traza ante salida rota o ascii, `list` vacío por filtro, ayuda en inglés) y 2 observaciones de seguridad (ESC crudo en rutas, FIFO colgado). Corregido en la iteración 2.
+- **Iteración 2: RECHAZADO.** Gate en FAIL por la verificación nueva `funciones` (`construir_parser` = 52 líneas) y CAMBIOS de código (`_Parser.__init__` frágil, `TRADUCCIONES` sin tests, `dup2` sin test). Corregido en la iteración 3.
+- **Iteración 3: ver abajo.**
 
 ## Gate (re-ejecutado por el approver)
-`bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` -> exit 1, **GATE: FAIL (fallos 1, sin verificar 0)**.
-Único fallo: verificación nueva `funciones`, `gestor_tareas/cli.py:107 construir_parser(52)`. Las otras 8 (secretos, tamaño, patrones, pytest, ruff, mypy, bandit, pip-audit) en PASS. Nota: el revisor de código vio PASS porque su gate aún no incluía la verificación `funciones`.
+`bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` -> exit 0, **GATE: PASS (fallos 0, sin verificar 0)**, 9 filas en PASS: secretos, tamano, funciones, patrones-peligrosos, tests-py, lint-py, tipos-py, sast-py, dependencias-py.
+
+Ejecución propia con `.venv` de `apps/gestor-tareas`: `pytest` 150 passed; `ruff check` OK; `mypy` sin errores (12 archivos). Con `ast`, la función más larga de producción es `principal` (19 líneas) y en `almacen.py` `guardar` (14).
 
 ## Veredictos
 | Revisor | Veredicto |
 |---|---|
-| Seguridad | APROBADO |
-| UX | APROBADO |
-| UI | APROBADO (no aplica) |
-| Código | **CAMBIOS** |
+| Seguridad (iter. 3) | APROBADO |
+| UX (iter. 3) | APROBADO |
+| UI (iter. 2, vigente) | APROBADO (no aplica) |
+| Código (iter. 3) | APROBADO |
 
-## Verificación independiente de los hallazgos de código
-| Hallazgo | Comprobación del approver | Estado |
+UI vigente: `git diff cd14c96..HEAD --stat` toca solo scripts de `.claude`, `.gitignore`, `almacen.py`, `cli.py`, `tests/test_cli_robustez.py` y artefactos de `factory/`. No hay HTML, CSS, JS ni GUI.
+
+## Verificación independiente de los obligatorios de la iteración 2
+| Obligatorio | Comprobación del approver | Estado |
 |---|---|---|
-| CAMBIOS-1 función de 52 líneas | `ast` y gate: `construir_parser` = 52 (>50, límite de CLAUDE.md) | CONFIRMADO |
-| CAMBIOS-2 `_Parser.__init__` | Solo acepta `prog`, `description`, `epilog`; `add_parser` pasa kwargs de más a `parser_class` | CONFIRMADO (riesgo latente; hoy pasa en 3.11-3.13) |
-| CAMBIOS-2 literal `"usage: "` | `_Formateador.format_help` usa `startswith("usage: ")` y degrada en silencio a inglés | CONFIRMADO (falla segura, no rompe) |
-| CAMBIOS-3 tests de TRADUCCIONES | Búsqueda en `tests/`: ningún test afirma `(opciones: `, `argumento --` ni `se esperaba un valor` | CONFIRMADO |
-| CAMBIOS-3 `dup2` en `_descartar_stdout` | Sin test que lo detecte (mutación del revisor: 0 fallos) | CONFIRMADO (menor) |
+| 1. `construir_parser` <= 50 y gate 9/9 | Gate re-ejecutado: `funciones` PASS; máximo 19 líneas con `ast` | CUMPLIDO |
+| 2. `_Parser.__init__` robusto | `cli.py:85-88`: `**kwargs: Unpack[_OpcionesParser]`, fuerza `add_help=False` y `formatter_class=_Formateador`; mypy OK | CUMPLIDO |
+| 3. Tests de `TRADUCCIONES` | `test_cli_robustez.py:219` (`argumento --prioridad ... (opciones: `) y `:227` (`se esperaba un valor`); el revisor de código borró cada una de las 6 entradas y falló exactamente 1 test cada vez | CUMPLIDO |
+| Rec. 4 `add_usage` en vez de `"usage: "` | `cli.py:59-66`; el literal ya no existe | CUMPLIDO |
+| Rec. 5 test de `dup2` | Test con descriptor real; la mutación `dup2` -> `pass` falla (según el revisor) | CUMPLIDO |
+| Rec. 7 `build.md` iteración 3 | Presente y coherente con lo observado | CUMPLIDO |
+
+## Observaciones menores nuevas: ¿CAMBIOS?
+Ninguna se trata como CAMBIOS. La decisión se justifica por severidad, alcance y regla:
+1. **`_id_valido` con ESC crudo (`cli.py:104`)**: existía ya en cd14c96, no es regresión de esta iteración. Solo refleja el argv del propio usuario en su propia terminal, sin vector remoto ni persistencia. Los dos revisores que lo vieron o no lo clasificaron como bloqueante o lo marcaron BAJO/informativo. No cumple el umbral de CAMBIOS. **Recomendado para una iteración futura:** `{valor!r}` o `texto_seguro(valor)`.
+2. **Ramas de saneo sin test (`almacen.py:47,49`)**: son defensa en profundidad redundante. `cargar`/`guardar`/`cli` ya sanean y `texto_seguro` es idempotente, y los ataques reales con ESC en rutas (directorio, FIFO, symlink, padre inexistente, NUL) fueron verificados por Seguridad con `cat -v` sin ESC crudo. El hueco es de cobertura de mutación, no de comportamiento. No bloquea. **Recomendado:** un test con `--archivo $'\n'`.
+3. **API privada `argparse._MutuallyExclusiveGroup` en la firma de `add_usage` (`cli.py:61-68`)**: solo en anotación de tipo, requerida por mypy estricto; no se ejecuta en tiempo de ejecución como dependencia frágil. Aceptable, sin cambio.
+
+Ninguna toca seguridad real, corrección funcional ni límites de CLAUDE.md, por lo que no justifican impedir el avance.
 
 ## Decisión
-Regla 0: gate en `FAIL` -> `RECHAZADO`, con independencia del juicio de los revisores. Regla 1 también aplica: CAMBIOS de código confirmados. No se evalúan las reglas 2-4; con el riesgo bajo, cuando el gate pase y los 4 revisores estén en APROBADO correspondería `APROBADO_AUTO` (mecánico; PR por defecto, `main` solo con orden explícita).
+- Regla 0: gate en `PASS` con 9/9 verificaciones, ninguna sin verificar. Pasa.
+- Regla 1: sin BLOQUEANTE ni CAMBIOS pendientes (los de la iteración 2 están cerrados y verificados). Pasa.
+- Reglas 2 y 3: riesgo `bajo`; no toca auth, pagos, datos personales, migraciones ni infraestructura. No se activan.
+- Regla 4: riesgo bajo, 4 revisores en APROBADO, gate en PASS -> **APROBADO_AUTO**.
 
-**ÚLTIMA ITERACIÓN PERMITIDA:** esta fue la construcción 2 de 3; la siguiente (3.ª) es la última. Si tras ella queda un BLOQUEANTE, CAMBIOS o el gate no está en PASS, el trabajo se escala a una persona en lugar de volver al builder.
+`APROBADO_AUTO` significa "verificado mecánicamente", no "nadie lo miró". Siguiente paso según el flujo: entrega por **PR** (nunca push directo a `main`; la fusión a `main` solo con orden explícita) y despliegue solo con confirmación humana. Queda como decisión de infraestructura para la persona en el PR: `quality.yml` dentro del ejemplo es una plantilla inerte en el monorepo.
 
-## Lista priorizada para el builder
+## Pendiente no bloqueante (para el PR o una iteración futura)
+- `{valor!r}`/`texto_seguro` en `_id_valido`.
+- Test de las ramas de saneo de `resolver_ruta` (`--archivo $'\n'`).
+- Saneo de ruta en tres sitios (estético).
+- Fuera de alcance: puntos (c) de las iteraciones 1 y 2 (TOCTOU, IDs enormes, hash-pinning, Windows, Python 3.14+, desajuste del gate en la raíz del monorepo).
 
-### (a) Obligatorios
-1. **Gate en PASS: recortar `construir_parser` a <=50 líneas** (`cli.py:107`). Extraer helpers por subcomando (p. ej. `_registrar_add(sub, ...)`) o un helper para los subparsers; sin cambiar el comportamiento. Ejecutar `quality-gate.sh apps/gestor-tareas` y confirmar 9/9 PASS (incluida `funciones`); revisar que ninguna otra función quede cerca del límite.
-2. **Endurecer `_Parser.__init__`**: `def __init__(self, **kwargs: Any)` fijando `add_help=False` y `formatter_class=_Formateador` (con `kwargs.setdefault`/sobrescritura), de modo que kwargs nuevos de argparse no provoquen `TypeError`. Mantener los 144 tests en verde.
-3. **Tests de `TRADUCCIONES`** (cada entrada debe fallar si se borra): afirmar `(opciones: ` y `argumento --prioridad` en el caso de prioridad inválida, y añadir `["list", "--estado"]` con `se esperaba un valor`.
-
-### (b) Recomendados de bajo costo
-4. Sustituir la dependencia del literal `"usage: "` por el gancho `add_usage` del formateador, o, si no es trivial, añadir 3.11 y 3.13 a la matriz de `quality.yml` (plantilla) y dejar el test `test_ayuda_en_espanol` como red de seguridad.
-5. Test de `_descartar_stdout`: un subprocess o descriptor real que compruebe que, tras un fallo de salida, stdout queda apuntando a `/dev/null` (que `dup2` no pueda sustituirse por `pass`). Menor.
-6. Quitar el doble saneo de ruta (`almacen.py:99, 128` vs `_ruta_invalida`), solo si es trivial y sin cambiar la salida.
-7. Actualizar `build.md` con la sección "Iteración 3" y el resultado del gate nuevo.
-
-### (c) Fuera de alcance
-- Soporte o pruebas con Python 3.14+ (no hay intérprete disponible; el riesgo se cubre con el punto (a)2).
-- Desajuste monorepo/gate en la raíz (`quality-gate.sh .` falla por pytest/bandit del monorepo, ajeno al proyecto).
-- CI del ejemplo como plantilla inerte en el monorepo (decisión de infraestructura para el humano en el PR).
-- Los puntos (c) de la iteración 1 (TOCTOU, IDs enormes, symlinks en padres, truncado de textos, hash-pinning, pinning de acciones por SHA, bloqueo entre procesos, Windows).
-
-DECISION: RECHAZADO
+DECISION: APROBADO_AUTO
