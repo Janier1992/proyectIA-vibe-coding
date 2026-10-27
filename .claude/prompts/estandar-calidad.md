@@ -22,9 +22,10 @@ Salida: `0` PASS, `1` FAIL, `2` UNVERIFIED. El gate corre en el Builder, en los 
 ## Baseline que todo proyecto debe configurar (lo hace el Builder)
 1. **Tests** automatizados de la lógica de negocio y de los casos de error.
 2. **Linter** y, si el stack lo admite, **tipado estático** con los scripts `lint` y `typecheck` (Node) o `ruff`/`mypy` (Python).
-3. **Auditoría de dependencias** con lockfile versionado. Verifica que cada paquete exista y sea el oficial (no inventes ni aceptes nombres parecidos), con versión fijada y justificación en el PRP.
-4. **CI** copiado desde `.claude/templates/ci-quality.yml` a `.github/workflows/quality.yml`, y recomendar proteger `main` exigiendo ese check.
-5. **`.env.example`** con variables sin valores reales; `.env` en `.gitignore`.
+3. **Entorno reproducible**: en Python crea `.venv/` con `pip install -r requirements-dev.txt` (el gate prioriza `.venv/bin`; mypy y pytest deben compartir entorno). En Node usa `npm ci`.
+4. **Auditoría de dependencias** con lockfile versionado. Verifica que cada paquete exista y sea el oficial (no inventes ni aceptes nombres parecidos), con versión fijada y justificación en el PRP.
+5. **CI** copiado desde `.claude/templates/ci-quality.yml` a `.github/workflows/quality.yml`, y recomendar proteger `main` exigiendo ese check.
+6. **`.env.example`** con variables sin valores reales; `.env` en `.gitignore`.
 
 ## Checklist de seguridad (OWASP Top 10) para los revisores
 - **Control de acceso**: autorización en el servidor para cada recurso; nunca confiar en el cliente.

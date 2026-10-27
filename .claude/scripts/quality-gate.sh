@@ -14,6 +14,11 @@ done
 OUT_ABS=""
 [ -n "$OUT" ] && OUT_ABS="$(cd "$(dirname "$OUT")" 2>/dev/null && pwd)/$(basename "$OUT")"
 cd "$ROOT" || { echo "Directorio inválido: $ROOT"; exit 1; }
+# Reproducibilidad: si el proyecto tiene un entorno virtual, sus herramientas tienen prioridad
+# (mypy y pytest deben vivir en el mismo entorno que las dependencias del proyecto).
+for venv in .venv venv; do
+  [ -d "$venv/bin" ] && { PATH="$PWD/$venv/bin:$PATH"; export PATH; break; }
+done
 
 MAX_FILE_LINES=500
 EXCLUDE_DIRS=(node_modules .git .claude .agents factory PRPs examples dist build .next .venv venv __pycache__ coverage)
