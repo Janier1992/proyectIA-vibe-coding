@@ -8,7 +8,7 @@
 - Código Python: `almacen.py`, `cli.py`, `logica.py`, `modelo.py`
 - Tests: `tests/*.py`
 - Documentación y configuración: `README.md`, `pyproject.toml`, `quality.yml`
-- Artefactos de proceso: `PRPs/`, `factory/gestor-tareas/build.md`
+- Artefactos de proceso: `PRPs/`, `examples/gestor-tareas/run/build.md`
 
 No hay ningún archivo HTML, CSS, JS, JSX, TSX ni de GUI.
 

@@ -1,9 +1,9 @@
 # Revisión de seguridad: gestor-tareas (iteración 3, final)
 
-Diff revisado: `git diff cd14c96..HEAD -- apps/gestor-tareas` (almacen.py, cli.py, tests/test_cli_robustez.py).
+Diff revisado: `git diff cd14c96..HEAD -- examples/gestor-tareas/app` (almacen.py, cli.py, tests/test_cli_robustez.py).
 
 ## Quality gate
-`factory/gestor-tareas/quality-gate.md`: GATE PASS (0 fallos, 0 sin verificar). Secretos, patrones peligrosos, tamaño y funciones, tests (150 passed), ruff, mypy, bandit (-ll) y pip-audit: todos PASS.
+`examples/gestor-tareas/run/quality-gate.md`: GATE PASS (0 fallos, 0 sin verificar). Secretos, patrones peligrosos, tamaño y funciones, tests (150 passed), ruff, mypy, bandit (-ll) y pip-audit: todos PASS.
 
 ## Regresiones buscadas en lo cambiado
 - `_Parser.__init__` con `**kwargs`/TypedDict: `add_help` y `formatter_class` se fuerzan; no abre superficie nueva. Sin hallazgos.

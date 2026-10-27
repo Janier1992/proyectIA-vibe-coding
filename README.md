@@ -36,6 +36,7 @@ proyectIA-vibe-coding/
 ├── PRPs/                      # PRPs generados con /generar-prp
 ├── factory/                   # Artefactos de cada corrida de /factory (vacía en el kit)
 ├── examples/                  # Ejemplos de referencia (no se copian a tus proyectos)
+│   └── gestor-tareas/         # Corrida Factory completa: app/, prp.md y run/
 ├── .github/workflows/         # CI que valida la consistencia del motor
 ├── CLAUDE.md                  # Reglas del proyecto y comandos rápidos para Claude Code
 ├── .cursorrules               # Reglas de contexto y comportamiento para Cursor
@@ -77,14 +78,16 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 
 Los artefactos de cada corrida quedan en `factory/[feature]/`.
 
+Ejemplo: [`gestor-tareas`](examples/gestor-tareas/run/) (proyecto en [`examples/gestor-tareas/app/`](examples/gestor-tareas/app/README.md))
 
 ### Lecciones de la primera corrida
 
-- El Approver rechazó la iteración 1 por 4 hallazgos CAMBIOS; la iteración 2 quedó `APROBADO_AUTO`.
-- Los revisores UX y UI detectaron el mismo defecto de contraste. Conviene que el spec-writer exija contraste >= 3:1 en los bordes de los controles.
-- `node --test <directorio>` falla en Node 22; usar `node --test <dir>/*.test.js`.
-- La verificación en navegador solo es posible si Playwright está disponible.
-- Con el quality gate actual, esa misma corrida habría terminado en `REQUIERE_HUMANO` y no en `APROBADO_AUTO`: la app no tiene linter configurado (`UNVERIFIED`). Es el comportamiento buscado: sin verificación mecánica no hay aprobación automática.
+- Hubo 3 iteraciones: la 1 y la 2 terminaron en `RECHAZADO`; la 3 en `APROBADO_AUTO`, con el gate 9/9 en `PASS`, 150 tests y riesgo bajo.
+- El gate dio `FAIL` en un entorno donde mypy y pytest estaban aislados; por eso ahora prioriza el `.venv/` del proyecto.
+- La regla de CLAUDE.md de funciones <= 50 líneas solo la detectaba un revisor leyendo el código, hasta que se convirtió en una verificación mecánica (`funciones`) del gate.
+- El hook de registro escribía `.claude/logs` en el directorio de trabajo; se ancló a `CLAUDE_PROJECT_DIR`.
+- El CI de plantilla asume el proyecto en la raíz y no corre dentro de un monorepo: `examples/gestor-tareas/app/.github/workflows/quality.yml` es una plantilla inerte.
+- `APROBADO_AUTO` significa "verificado mecánicamente", no "revisado por una persona".
 
 ---
 

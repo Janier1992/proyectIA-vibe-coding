@@ -66,8 +66,11 @@ for t in examples/*/app/; do
   if ls "$t"*.test.js >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
     node --test "$t"*.test.js >/dev/null 2>&1 || fail "Fallan los tests de $t"
   fi
-  if ls "$t"tests/test_*.py >/dev/null 2>&1 && command -v pytest >/dev/null 2>&1; then
-    (cd "$t" && pytest -q >/dev/null 2>&1) || fail "Fallan los tests de $t"
+  if ls "$t"tests/test_*.py >/dev/null 2>&1; then
+    runner=pytest; [ -x "$t.venv/bin/pytest" ] && runner="$PWD/$t.venv/bin/pytest"
+    if command -v "$runner" >/dev/null 2>&1; then
+      (cd "$t" && "$runner" -q >/dev/null 2>&1) || fail "Fallan los tests de $t"
+    else echo "⚠️  pytest no disponible: no se ejecutaron los tests de $t"; fi
   fi
 done
 ok "Tests de ejemplos revisados"

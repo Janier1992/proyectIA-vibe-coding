@@ -1,9 +1,9 @@
 # AVISO: plantilla inerte dentro de este monorepo.
 # GitHub solo ejecuta los workflows de la carpeta .github/workflows/ de la RAIZ del repositorio;
-# este archivo (apps/gestor-tareas/.github/) NO se ejecuta aqui. Sirve para cuando el proyecto
+# este archivo (examples/gestor-tareas/app/.github/) NO se ejecuta aqui. Sirve para cuando el proyecto
 # se copie a su propio repositorio, junto con .claude/scripts/quality-gate.sh.
 # La verificacion vigente en este monorepo es el gate local, desde la raiz:
-#   bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md
+#   bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md
 # CI de calidad y seguridad de gestor-tareas.
 # Adaptado de .claude/templates/ci-quality.yml: el proyecto es la raíz y se asume que
 # la carpeta .claude/ del motor (scripts/quality-gate.sh) se copió dentro del proyecto.

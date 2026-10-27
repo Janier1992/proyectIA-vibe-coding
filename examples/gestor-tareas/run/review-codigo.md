@@ -1,11 +1,11 @@
 # Revisión de Código: gestor-tareas (iteración 3, última)
 
-Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Diff revisado: `git diff cd14c96..HEAD -- apps/gestor-tareas` (almacen.py, cli.py, test_cli_robustez.py).
+Rama `examples/gestor-tareas/run` | PRP `examples/gestor-tareas/prp.md` | Diff revisado: `git diff cd14c96..HEAD -- examples/gestor-tareas/app` (almacen.py, cli.py, test_cli_robustez.py).
 
 ## Resultados reales (ejecutados por el revisor)
 | Comprobación | Resultado |
 |---|---|
-| `quality-gate.sh apps/gestor-tareas` | **GATE: PASS (fallos 0, sin verificar 0)**, 9 filas en PASS, incluida `funciones` |
+| `quality-gate.sh examples/gestor-tareas/app` | **GATE: PASS (fallos 0, sin verificar 0)**, 9 filas en PASS, incluida `funciones` |
 | `pytest -q` (3.13) | 150 passed |
 | `pytest -q` (3.11 y 3.12, venvs en scratchpad) | 150 passed en ambos; `typing.Unpack` OK desde 3.11 (`requires-python >= 3.11`) |
 | `ruff check .` / `ruff format --check .` | OK / 13 archivos ya formateados |

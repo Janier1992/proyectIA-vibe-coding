@@ -6,7 +6,7 @@ Solo usa la librería estándar; no tiene dependencias de runtime. Requiere **Py
 ## Inicio rápido
 
 ```bash
-cd apps/gestor-tareas
+cd examples/gestor-tareas/app
 python -m gestor_tareas add "Pagar luz" --prioridad alta   # Tarea 1 añadida: Pagar luz [alta]
 python -m gestor_tareas list                               #    1  [ ]  alta   Pagar luz
 python -m gestor_tareas done 1                             # Tarea 1 marcada como hecha.
@@ -18,7 +18,7 @@ comando real es `python -m gestor_tareas`. Ayuda: `python -m gestor_tareas --hel
 
 ## Uso
 
-Desde `apps/gestor-tareas/`:
+Desde `examples/gestor-tareas/app/`:
 
 ```bash
 python -m gestor_tareas [--archivo RUTA] <comando> [args]
@@ -91,5 +91,5 @@ el check "Quality gate". Mientras tanto, la verificación vigente es el gate loc
 del repositorio:
 
 ```bash
-bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md
+bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md
 ```

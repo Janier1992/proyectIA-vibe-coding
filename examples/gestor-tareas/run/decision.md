@@ -1,6 +1,6 @@
 # Decision: gestor-tareas (iteración 3, última)
 
-Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Riesgo declarado: **bajo** (CLI local, sin red, auth, pagos, datos personales, migraciones ni infraestructura). Reconfirmado: el diff no añade nada de esas categorías.
+Rama `examples/gestor-tareas/run` | PRP `examples/gestor-tareas/prp.md` | Riesgo declarado: **bajo** (CLI local, sin red, auth, pagos, datos personales, migraciones ni infraestructura). Reconfirmado: el diff no añade nada de esas categorías.
 
 ## Historial
 - **Iteración 1: RECHAZADO.** UX con 4 CAMBIOS (`--archivo` tras el subcomando, traza ante salida rota o ascii, `list` vacío por filtro, ayuda en inglés) y 2 observaciones de seguridad (ESC crudo en rutas, FIFO colgado). Corregido en la iteración 2.
@@ -8,9 +8,9 @@ Rama `factory/gestor-tareas` | PRP `PRPs/gestor-tareas-2026-10-27.md` | Riesgo d
 - **Iteración 3: ver abajo.**
 
 ## Gate (re-ejecutado por el approver)
-`bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` -> exit 0, **GATE: PASS (fallos 0, sin verificar 0)**, 9 filas en PASS: secretos, tamano, funciones, patrones-peligrosos, tests-py, lint-py, tipos-py, sast-py, dependencias-py.
+`bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md` -> exit 0, **GATE: PASS (fallos 0, sin verificar 0)**, 9 filas en PASS: secretos, tamano, funciones, patrones-peligrosos, tests-py, lint-py, tipos-py, sast-py, dependencias-py.
 
-Ejecución propia con `.venv` de `apps/gestor-tareas`: `pytest` 150 passed; `ruff check` OK; `mypy` sin errores (12 archivos). Con `ast`, la función más larga de producción es `principal` (19 líneas) y en `almacen.py` `guardar` (14).
+Ejecución propia con `.venv` de `examples/gestor-tareas/app`: `pytest` 150 passed; `ruff check` OK; `mypy` sin errores (12 archivos). Con `ast`, la función más larga de producción es `principal` (19 líneas) y en `almacen.py` `guardar` (14).
 
 ## Veredictos
 | Revisor | Veredicto |

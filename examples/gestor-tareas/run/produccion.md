@@ -8,7 +8,7 @@ Estado: **verificado mecánicamente, pendiente de decisión y despliegue humanos
 
 ## Checklist previo al uso real
 - [ ] Una persona confirmó el destino de entrega (PR) y la decisión del Approver.
-- [ ] Una persona decidió qué hacer con `apps/gestor-tareas/.github/workflows/quality.yml`: GitHub no lo ejecuta dentro de este monorepo; solo funciona si el proyecto vive en su propio repositorio con `.claude/scripts/quality-gate.sh` copiado.
+- [ ] Una persona decidió qué hacer con `examples/gestor-tareas/app/.github/workflows/quality.yml`: GitHub no lo ejecuta dentro de este monorepo; solo funciona si el proyecto vive en su propio repositorio con `.claude/scripts/quality-gate.sh` copiado.
 - [ ] En el entorno destino: `python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt` y `bash .claude/scripts/quality-gate.sh .` en `PASS` (9 verificaciones).
 - [ ] Prueba manual rápida (ver criterio de éxito).
 - [ ] Probado en el sistema operativo real de uso: **no se probó en Windows** (los tests de permisos y symlinks se omiten allí).

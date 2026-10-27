@@ -1,7 +1,7 @@
 # PRP: Gestor de tareas CLI (`gestor-tareas`)
 
 Fecha: 2026-10-27 | Tipo: software (CLI Python, sin red, sin HTTP) | Plantilla base: `prp_backend_api.md` adaptada a CLI
-Rama de trabajo: `factory/gestor-tareas` | Directorio del proyecto: `apps/gestor-tareas/`
+Rama de trabajo: `examples/gestor-tareas/run` | Directorio del proyecto: `examples/gestor-tareas/app/`
 
 ## Goal
 CLI en Python 3 que gestiona una lista personal de tareas persistida en un único archivo JSON local. Solo librería estándar en runtime (`argparse`, `json`, `pathlib`, `os`, `tempfile`, `dataclasses`, `datetime`, `sys`). La lógica de negocio es pura (sin E/S) y está separada del almacenamiento y de la CLI para poder testearla sin tocar disco.
@@ -30,14 +30,14 @@ Justificación: herramienta local de un solo usuario, sin red, sin autenticació
 - [ ] Escritura atómica (temporal en el mismo directorio + `os.replace`); el archivo final tiene modo `0o600` en POSIX.
 - [ ] Toda entrada se valida (texto, prioridad, estado, ID, ruta) antes de tocar disco.
 - [ ] Lógica pura en `logica.py` sin importar `os`, `pathlib`, `sys` ni `json`; ninguna función pura hace E/S ni lee el reloj.
-- [ ] `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` termina con `GATE: PASS` (exit 0), con `dependencias-py` en PASS.
+- [ ] `bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md` termina con `GATE: PASS` (exit 0), con `dependencias-py` en PASS.
 - [ ] Todos los casos de aceptación (sección final) tienen un test pytest asociado y pasan.
 
 ## Estructura de archivos (tarea del Builder)
 Nota de nomenclatura: el directorio del proyecto es `kebab-case` (`gestor-tareas`) según CLAUDE.md; el paquete Python usa `snake_case` (`gestor_tareas`) porque un identificador importable no admite guiones. Es una excepción obligada por el lenguaje, no una desviación.
 
 ```
-apps/gestor-tareas/
+examples/gestor-tareas/app/
   pyproject.toml            # ruff, mypy, pytest (sin [project.dependencies] con terceros)
   requirements.txt          # solo comentario (runtime vacío)
   requirements-dev.txt      # herramientas de calidad con versión fijada
@@ -60,7 +60,7 @@ Límites del motor: archivos <= 500 líneas, funciones <= 50 líneas, una respon
 
 ## Especificación de la CLI
 
-Invocación: `python -m gestor_tareas [--archivo RUTA] <comando> [args]` ejecutado desde `apps/gestor-tareas/`. `--archivo` es opción global y puede ir **antes o después** del subcomando (documentarlo en `--help`); si se da en ambos sitios gana el de después; la precedencia `--archivo` > entorno > defecto no cambia.
+Invocación: `python -m gestor_tareas [--archivo RUTA] <comando> [args]` ejecutado desde `examples/gestor-tareas/app/`. `--archivo` es opción global y puede ir **antes o después** del subcomando (documentarlo en `--help`); si se da en ambos sitios gana el de después; la precedencia `--archivo` > entorno > defecto no cambia.
 
 | Comando | Sintaxis | Comportamiento | Salida en stdout (éxito) |
 |---|---|---|---|
@@ -171,40 +171,40 @@ Guardado solo ocurre en `add`, `done` (solo si cambió) y `remove`; `list` y err
 ### Lista de tareas
 ```yaml
 Task 1: Scaffolding y baseline de calidad
-  CREATE: apps/gestor-tareas/{pyproject.toml, requirements.txt, requirements-dev.txt, .gitignore, README.md}
-  CREATE: apps/gestor-tareas/gestor_tareas/{__init__.py, __main__.py}
-  VALIDATE: ruff check . ; mypy . (desde apps/gestor-tareas/)
+  CREATE: examples/gestor-tareas/app/{pyproject.toml, requirements.txt, requirements-dev.txt, .gitignore, README.md}
+  CREATE: examples/gestor-tareas/app/gestor_tareas/{__init__.py, __main__.py}
+  VALIDATE: ruff check . ; mypy . (desde examples/gestor-tareas/app/)
 
 Task 2: Modelo y errores
-  CREATE: apps/gestor-tareas/gestor_tareas/modelo.py
+  CREATE: examples/gestor-tareas/app/gestor_tareas/modelo.py
   VALIDATE: mypy estricto sin errores
 
 Task 3: Lógica pura + tests
-  CREATE: apps/gestor-tareas/gestor_tareas/logica.py
-  CREATE: apps/gestor-tareas/tests/test_logica.py
+  CREATE: examples/gestor-tareas/app/gestor_tareas/logica.py
+  CREATE: examples/gestor-tareas/app/tests/test_logica.py
   VALIDATE: pytest -q tests/test_logica.py
 
 Task 4: Almacenamiento + tests (usar tmp_path de pytest, nunca el HOME real)
-  CREATE: apps/gestor-tareas/gestor_tareas/almacen.py
-  CREATE: apps/gestor-tareas/tests/test_almacen.py
+  CREATE: examples/gestor-tareas/app/gestor_tareas/almacen.py
+  CREATE: examples/gestor-tareas/app/tests/test_almacen.py
   VALIDATE: pytest -q tests/test_almacen.py
 
 Task 5: CLI + tests de integración (invocar cli.principal(argv) con capsys, y un test con subprocess usando sys.executable y lista de args, sin shell=True)
-  CREATE: apps/gestor-tareas/gestor_tareas/cli.py
-  CREATE: apps/gestor-tareas/tests/test_cli.py
+  CREATE: examples/gestor-tareas/app/gestor_tareas/cli.py
+  CREATE: examples/gestor-tareas/app/tests/test_cli.py
   VALIDATE: pytest -q
 
 Task 6: CI
   CREATE: .github/workflows/quality.yml (raíz del repo; ver sección CI)
 
 Task 7: Gate
-  RUN: bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md
+  RUN: bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md
   EXPECT: GATE: PASS
 ```
 
 ### Validation Loop
 ```bash
-cd apps/gestor-tareas
+cd examples/gestor-tareas/app
 python3 -m venv /tmp/venv-gestor && . /tmp/venv-gestor/bin/activate   # o usar las herramientas ya instaladas
 pip install -r requirements-dev.txt
 pytest -q
@@ -214,7 +214,7 @@ mypy .
 bandit -q -r . -ll -x ./tests
 pip-audit -r requirements.txt
 cd ../..
-bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md
+bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md
 ```
 Prueba manual mínima (usar archivo temporal, nunca el HOME real):
 ```bash
@@ -227,10 +227,10 @@ python -m gestor_tareas remove 1
 ```
 
 ## Baseline de calidad y seguridad (obligatorio)
-Ver `.claude/prompts/estandar-calidad.md`. Esta sección refleja cómo `.claude/scripts/quality-gate.sh` detecta y ejecuta Python; el gate se ejecuta **desde la raíz del repo** con el directorio del proyecto como argumento, y el script hace `cd apps/gestor-tareas`, de modo que todos los comandos corren con ese directorio como cwd.
+Ver `.claude/prompts/estandar-calidad.md`. Esta sección refleja cómo `.claude/scripts/quality-gate.sh` detecta y ejecuta Python; el gate se ejecuta **desde la raíz del repo** con el directorio del proyecto como argumento, y el script hace `cd examples/gestor-tareas/app`, de modo que todos los comandos corren con ese directorio como cwd.
 
 ### Cómo el gate evalúa este proyecto
-| Verificación del gate | Comando real ejecutado (cwd = `apps/gestor-tareas`) | Requisito para PASS |
+| Verificación del gate | Comando real ejecutado (cwd = `examples/gestor-tareas/app`) | Requisito para PASS |
 |---|---|---|
 | `secretos` | `gitleaks` si existe; si no, regex integrado sobre archivos no-test | Ningún literal tipo `password/token/secret/api_key = "..."` (8+ caracteres) en código no-test, ningún `.env` versionado. Los tests (`test_*.py`) están exentos del regex, pero igualmente no deben contener secretos reales |
 | `tamano` | recuento de líneas de `*.py` | Cada archivo <= 500 líneas |
@@ -241,7 +241,7 @@ Ver `.claude/prompts/estandar-calidad.md`. Esta sección refleja cómo `.claude/
 | `sast-py` | `bandit -q -r . -ll -x ./tests,./node_modules,...` | Cero hallazgos de severidad media o superior. Los tests quedan excluidos de bandit, pero igualmente no deben usar `shell=True` |
 | `dependencias-py` | Si existe `requirements.txt`: `pip-audit -r requirements.txt`. **Si no existe y hay `pyproject.toml`, el gate devuelve UNVERIFIED** | Por eso `requirements.txt` es **obligatorio**: contiene solo comentarios (sin paquetes). Verificado empíricamente en este entorno con pip-audit 2.10.1: un `requirements.txt` solo de comentarios devuelve "No known vulnerabilities found" (exit 0) = PASS. Sin `requirements.txt` el resultado sería UNVERIFIED y el gate no sería PASS |
 
-El gate imprime una fila por verificación; el resultado esperado es 8 filas en PASS (`secretos`, `tamano`, `patrones-peligrosos`, `tests-py`, `lint-py`, `tipos-py`, `sast-py`, `dependencias-py`), `GATE: PASS (fallos: 0, sin verificar: 0)`. Como las rutas excluidas incluyen `factory`, `PRPs` y `.claude`, el reporte generado en `factory/gestor-tareas/quality-gate.md` no contamina el análisis.
+El gate imprime una fila por verificación; el resultado esperado es 8 filas en PASS (`secretos`, `tamano`, `patrones-peligrosos`, `tests-py`, `lint-py`, `tipos-py`, `sast-py`, `dependencias-py`), `GATE: PASS (fallos: 0, sin verificar: 0)`. Como las rutas excluidas incluyen `factory`, `PRPs` y `.claude`, el reporte generado en `examples/gestor-tareas/run/quality-gate.md` no contamina el análisis.
 
 El gate necesita que `ruff`, `mypy`, `pytest`, `bandit` y `pip-audit` estén en el `PATH` (si falta alguna el resultado es UNVERIFIED). Entorno de referencia verificado: Python 3.13.17, ruff 0.16.9, mypy 2.3.1, pytest 9.1.1, bandit 1.9.4, pip-audit 2.10.1.
 
@@ -275,7 +275,7 @@ El gate necesita que `ruff`, `mypy`, `pytest`, `bandit` y `pip-audit` estén en 
 Ninguna en runtime (solo librería estándar). Dev: ruff, mypy, pytest, bandit, pip-audit, todos oficiales (Astral, python/mypy, pytest-dev, PyCQA, PyPA), justificados por el estándar de calidad del motor.
 
 ### CI
-El template `.claude/templates/ci-quality.yml` ejecuta el gate sobre `.`, pero este proyecto vive en `apps/gestor-tareas/` y mypy/ruff deben correr con ese directorio como cwd. Por tanto el Builder crea `.github/workflows/quality.yml` **adaptado** (iteración 2: por decisión del Approver queda como plantilla en `apps/gestor-tareas/.github/workflows/quality.yml`, que GitHub no ejecuta en este monorepo; el gate local es la verificación vigente, ver README) (no copia literal): mismos `permissions: contents: read`, `on: push/pull_request`, `actions/checkout@v4`, `actions/setup-python@v5` con `python-version: "3.12"`; instala `pip install -r apps/gestor-tareas/requirements-dev.txt` (y `requirements.txt`); y ejecuta `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out quality-gate.md` más el paso de publicar reporte en `$GITHUB_STEP_SUMMARY`. Se omite `setup-node` (no hay Node). El workflow existente `validate-engine.yml` no se modifica. Recomendación documentada (no ejecutable por el agente): proteger `main` exigiendo el check "Quality gate". El CI usa Python 3.12 y el proyecto soporta >= 3.11, por lo que los tests no deben depender de comportamiento exclusivo de 3.13.
+El template `.claude/templates/ci-quality.yml` ejecuta el gate sobre `.`, pero este proyecto vive en `examples/gestor-tareas/app/` y mypy/ruff deben correr con ese directorio como cwd. Por tanto el Builder crea `.github/workflows/quality.yml` **adaptado** (iteración 2: por decisión del Approver queda como plantilla en `examples/gestor-tareas/app/.github/workflows/quality.yml`, que GitHub no ejecuta en este monorepo; el gate local es la verificación vigente, ver README) (no copia literal): mismos `permissions: contents: read`, `on: push/pull_request`, `actions/checkout@v4`, `actions/setup-python@v5` con `python-version: "3.12"`; instala `pip install -r examples/gestor-tareas/app/requirements-dev.txt` (y `requirements.txt`); y ejecuta `bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out quality-gate.md` más el paso de publicar reporte en `$GITHUB_STEP_SUMMARY`. Se omite `setup-node` (no hay Node). El workflow existente `validate-engine.yml` no se modifica. Recomendación documentada (no ejecutable por el agente): proteger `main` exigiendo el check "Quality gate". El CI usa Python 3.12 y el proyecto soporta >= 3.11, por lo que los tests no deben depender de comportamiento exclusivo de 3.13.
 
 ## Amenazas relevantes (OWASP) y mitigaciones
 | Amenaza | Riesgo concreto | Mitigación obligatoria | Test |
@@ -298,7 +298,7 @@ SSRF y subida de archivos: no aplican (sin red). Cabeceras/CSP: no aplican (sin 
 - Confirmaciones concretas que repiten el ID afectado (ver tabla de comandos). `done` sobre una tarea ya hecha no es error.
 - Códigos de salida 0/1/2/3 documentados en README y `--help` (epílogo).
 - Accesibilidad: no depender de color ni de símbolos Unicode; los marcadores son `[x]`/`[ ]`. Salida en UTF-8; el texto con acentos se imprime tal cual. **El revisor de UI no aplica** (CLI sin interfaz gráfica; contraste/WCAG 1.4.11 no son evaluables).
-- Los comandos de test deben funcionar con el Python instalado (3.13) y en CI (3.12): usar `pytest -q` desde `apps/gestor-tareas/`.
+- Los comandos de test deben funcionar con el Python instalado (3.13) y en CI (3.12): usar `pytest -q` desde `examples/gestor-tareas/app/`.
 
 ## Criterios de aceptación verificables (cada uno con test pytest)
 Notación: `A` = archivo temporal en `tmp_path`, `main(args)` = `cli.principal(["--archivo", str(A), *args])`.
@@ -342,7 +342,7 @@ Lógica pura
 Calidad
 27. `python -m gestor_tareas --help` (subprocess) devuelve 0 e incluye `--archivo`, `GESTOR_TAREAS_ARCHIVO` y los códigos de salida; el texto está en español (`uso:`, `opciones:`).
 28. Ejecución real con `subprocess.run([sys.executable, "-m", "gestor_tareas", ...], cwd=<proyecto>, capture_output=True, text=True, check=False)` (lista de argumentos, sin shell): `add` y `list` funcionan de extremo a extremo y el código de salida del proceso coincide con `principal`.
-29. `bash .claude/scripts/quality-gate.sh apps/gestor-tareas --out factory/gestor-tareas/quality-gate.md` -> exit 0 y `GATE: PASS (fallos: 0, sin verificar: 0)`; `ruff format --check .` sin diferencias; ningún `# noqa` / `# type: ignore` sin motivo.
+29. `bash .claude/scripts/quality-gate.sh examples/gestor-tareas/app --out examples/gestor-tareas/run/quality-gate.md` -> exit 0 y `GATE: PASS (fallos: 0, sin verificar: 0)`; `ruff format --check .` sin diferencias; ningún `# noqa` / `# type: ignore` sin motivo.
 
 Iteración 2 (hallazgos de revisión)
 30. Salida rota: stdout que lanza `OSError` (o `/dev/full` por subprocess) -> código 3, `Error: no se pudo escribir la salida: ...` sin `Traceback`; tras `add` el mensaje añade `El cambio sí se guardó.` y la tarea está guardada; `BrokenPipeError` -> código 0 y stderr vacío; stdout `ascii` con acentos/emoji no falla.
