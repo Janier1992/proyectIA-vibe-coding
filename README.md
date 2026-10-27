@@ -12,6 +12,9 @@ Contiene las instrucciones de contexto, agentes especializados, comandos persona
 proyectIA-vibe-coding/
 ├── .claude/                   # Motor agéntico para Claude Code
 │   ├── scripts/validate-engine.sh # Valida la consistencia del propio motor
+│   ├── scripts/quality-gate.sh    # Quality gate de proyectos (seguridad y calidad mecánicas)
+│   ├── scripts/test-quality-gate.sh # Autotest del quality gate
+│   ├── templates/ci-quality.yml   # CI de calidad para copiar a los proyectos
 │   ├── PRPs/                  # Historial y plantillas de Requerimientos de Producto
 │   │   └── templates/
 │   │       ├── prp_base.md        # Plantilla genérica base
@@ -83,6 +86,21 @@ Ejemplo: [`calculadora-propinas`](examples/calculadora-propinas/run/) (app en [`
 - Los revisores UX y UI detectaron el mismo defecto de contraste. Conviene que el spec-writer exija contraste >= 3:1 en los bordes de los controles.
 - `node --test <directorio>` falla en Node 22; usar `node --test <dir>/*.test.js`.
 - La verificación en navegador solo es posible si Playwright está disponible.
+- Con el quality gate actual, esa misma corrida habría terminado en `REQUIERE_HUMANO` y no en `APROBADO_AUTO`: la app no tiene linter configurado (`UNVERIFIED`). Es el comportamiento buscado: sin verificación mecánica no hay aprobación automática.
+
+---
+
+## 🛡️ Calidad y Seguridad sin Inspección Humana
+
+La calidad no depende de que alguien lea el código: se verifica con herramientas. `bash .claude/scripts/quality-gate.sh` revisa secretos, patrones inseguros, tamaño, tests, lint, tipos, SAST y vulnerabilidades de dependencias.
+
+| Resultado | Significado | Efecto en la Factory |
+|---|---|---|
+| `PASS` (0) | Todo verificado mecánicamente | Permite `APROBADO_AUTO` |
+| `FAIL` (1) | Falla una verificación | `RECHAZADO`, vuelve al Builder |
+| `UNVERIFIED` (2) | Falta una herramienta (por ejemplo, linter) | Exige una persona |
+
+Cada proyecto generado recibe el baseline (tests, lint, tipos, lockfile y CI desde `.claude/templates/ci-quality.yml`). Estándar completo y checklist OWASP: `.claude/prompts/estandar-calidad.md`.
 
 ---
 

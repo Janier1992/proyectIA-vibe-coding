@@ -68,4 +68,18 @@ if command -v node >/dev/null 2>&1; then
   ok "Tests de ejemplos revisados"
 fi
 
+# 10. Calidad verificable: piezas del quality gate presentes y conectadas al pipeline
+for f in .claude/scripts/quality-gate.sh .claude/scripts/test-quality-gate.sh .claude/prompts/estandar-calidad.md .claude/templates/ci-quality.yml; do
+  [ -f "$f" ] || fail "Falta $f"
+done
+for f in .claude/commands/factory.md .claude/commands/bootstrap.md .claude/agents/builder.md .claude/agents/approver.md \
+         .claude/agents/revisor-codigo.md .claude/agents/revisor-seguridad.md .claude/agents/spec-writer.md CLAUDE.md .cursorrules .windsurfrules .agents/AGENTS.md; do
+  grep -q "quality-gate\|estandar-calidad" "$f" || fail "$f no referencia el quality gate / estándar de calidad"
+done
+for tpl in prp_base prp_frontend prp_backend_api prp_automatizacion; do
+  grep -q "Baseline de calidad" ".claude/PRPs/templates/$tpl.md" || fail "La plantilla $tpl no incluye el baseline de calidad"
+done
+bash .claude/scripts/test-quality-gate.sh >/dev/null 2>&1 || fail "Falla el autotest del quality gate (bash .claude/scripts/test-quality-gate.sh)"
+ok "Quality gate, estándar y CI conectados al pipeline"
+
 [ "$errors" -eq 0 ] && echo "✅ Motor consistente" || { echo "$errors problema(s) encontrados"; exit 1; }

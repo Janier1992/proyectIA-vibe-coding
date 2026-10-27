@@ -1,0 +1,35 @@
+# CI de calidad y seguridad. Copiar a .github/workflows/quality.yml en el proyecto generado.
+# Exige el mismo gate que el motor: cualquier FAIL o UNVERIFIED rompe el build.
+# Recomendado: proteger la rama principal exigiendo este check antes de fusionar.
+name: Quality gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias del proyecto
+        run: |
+          if [ -f package-lock.json ]; then npm ci; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Instalar herramientas de calidad (Python)
+        if: hashFiles('**/*.py') != ''
+        run: pip install ruff mypy pytest bandit pip-audit
+      - name: Quality gate
+        run: bash .claude/scripts/quality-gate.sh . --out quality-gate.md
+      - name: Publicar reporte
+        if: always()
+        run: cat quality-gate.md >> "$GITHUB_STEP_SUMMARY"

@@ -64,6 +64,17 @@ Reglas: nunca push directo a `main` por iniciativa propia, nunca desplegar sin c
 
 ---
 
+## 🛡️ Calidad y Seguridad sin Inspección Humana
+
+El motor no puede asumir que una persona leerá el código. Por eso la calidad se **verifica con herramientas**, no con opiniones (detalle en `.claude/prompts/estandar-calidad.md`):
+
+- **Quality gate**: `bash .claude/scripts/quality-gate.sh [dir]` revisa secretos, tamaño, patrones inseguros, tests, lint, tipos, SAST y vulnerabilidades de dependencias. Salida `0` PASS, `1` FAIL, `2` UNVERIFIED.
+- **Sin verificación mecánica no hay aprobación automática**: `FAIL` rechaza; `UNVERIFIED` (falta una herramienta) exige una persona; `APROBADO_AUTO` solo con el gate en `PASS`.
+- **Baseline obligatorio en todo proyecto**: tests, linter, tipado (si el stack lo admite), lockfile con auditoría de dependencias y CI (`.claude/templates/ci-quality.yml`). Lo configura el Builder y lo exige `/bootstrap`.
+- **El Approver vuelve a ejecutar el gate** por su cuenta; un revisor nunca compensa un gate rojo.
+
+---
+
 ## 🛠️ Comandos del Motor Agéntico (Claude Code Commands)
 
 Este kit contiene comandos agénticos listos para ser invocados en la línea de comandos de Claude Code o interpretados por otros agentes:
@@ -101,4 +112,6 @@ Este kit contiene comandos agénticos listos para ser invocados en la línea de 
 - ❌ **No ignorar fallos de tipos o de compilación**: No dejes warnings o errores de linting sin corregir.
 - ❌ **No alucinar dependencias**: Valida siempre que las librerías o modelos que sugieres existan y estén en sus versiones correctas.
 - ❌ **No saltarse la fase de testing**: Implementa y ejecuta pruebas unitarias o de integración simples para validar tu código.
+- ❌ **No aprobar ni fusionar sin quality gate**: nunca declares un cambio listo sin el resultado real de `quality-gate.sh`.
+- ❌ **No desactivar ni debilitar controles para obtener verde**: no borres tests, linters, reglas del gate ni el CI para que pase.
 - ❌ **No hardcodear credenciales**: Usa variables de entorno o archivos de configuración para almacenar credenciales o configuraciones variables.

@@ -71,3 +71,9 @@ Para tareas complejas o nuevas funcionalidades, sigue de forma estricta el **Buc
 ## 🏭 Metodología Factory
 
 Para desarrollos completos sigue el pipeline definido en `CLAUDE.md`: Entrada → Spec writer → Builder → revisión paralela (Seguridad, UX, UI, Código) → Approver → ¿Humano? → Main o PR → Producción. Guarda los artefactos en `factory/[feature]/`, abre PR por defecto, nunca hagas push directo a `main` ni despliegues sin confirmación humana.
+
+---
+
+## 🛡️ Calidad y Seguridad sin Inspección Humana
+
+No asumas que una persona leerá el código. Ejecuta `bash .claude/scripts/quality-gate.sh` (secretos, patrones inseguros, tests, lint, tipos, SAST, dependencias) y cumple `.claude/prompts/estandar-calidad.md`. Sin el gate en PASS no declares un cambio listo ni lo apruebes automáticamente; un resultado UNVERIFIED requiere una persona.

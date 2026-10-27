@@ -22,4 +22,5 @@ You are Cascade, the advanced AI assistant in Windsurf. This workspace uses the 
 - **Requirements (PRP)**: For non-trivial modifications, refer to or generate a PRP file in the `PRPs/` directory using the corresponding templates in `.claude/PRPs/templates/`.
 - **Iterative Validation**: Test and validate each logical block immediately. Never write large chunks of unverified code.
 - **Factory**: Para desarrollos completos usa el pipeline Idea → Producción definido en `CLAUDE.md` (`/factory`): spec, build, revisión paralela (seguridad, UX, UI, código), aprobación, compuerta humana y PR por defecto. Nunca push directo a `main` ni despliegue sin confirmación humana.
+- **Calidad verificable**: no asumas inspección humana. Ejecuta `bash .claude/scripts/quality-gate.sh` y sigue `.claude/prompts/estandar-calidad.md`; sin gate en PASS no declares un cambio como listo ni lo apruebes automáticamente.
 - **Fail Gracefully**: Implement proper error handling, timeouts, and fallback logic for all external requests or database operations.

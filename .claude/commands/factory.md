@@ -26,6 +26,12 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 - Lanza el agente `builder` con la ruta del PRP. Resultado: código en la rama y `factory/[feature]/build.md`.
 - Haz commit en la rama de trabajo al terminar.
 
+## 3b. Quality gate (mecánico)
+- Ejecuta `bash .claude/scripts/quality-gate.sh . --out factory/[feature]/quality-gate.md`.
+- `FAIL`: vuelve a la fase 3 con el reporte; no gastes revisores en código que no pasa el gate.
+- `UNVERIFIED`: el `builder` intenta instalar/configurar la herramienta que falta. Si no se puede, continúa, pero la decisión final no podrá ser `APROBADO_AUTO`.
+- El baseline (tests, lint, tipos, auditoría, CI) está definido en `.claude/prompts/estandar-calidad.md`.
+
 ## 4. Revisión paralela
 - Lanza **en un solo mensaje, en paralelo**, los cuatro agentes: `revisor-seguridad`, `revisor-ux`, `revisor-ui`, `revisor-codigo`. Cada uno recibe `[feature]` y la ruta del PRP.
 - Cada uno escribe `factory/[feature]/review-*.md` con su `VEREDICTO`.
@@ -35,7 +41,7 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 - Si `DECISION: RECHAZADO`: vuelve a la fase 3 pasando al `builder` la lista de hallazgos. Máximo 3 iteraciones; después, detente y reporta al usuario.
 
 ## 6. ¿Humano?
-- `APROBADO_AUTO`: continúa a la fase 7 con destino por defecto **PR**.
+- `APROBADO_AUTO` (solo con gate en `PASS`): continúa a la fase 7 con destino por defecto **PR**.
 - `REQUIERE_HUMANO`: presenta al usuario el resumen de `decision.md` (riesgo, hallazgos, diff) y espera su respuesta explícita. Sin respuesta, no avances.
 
 ## 7. Main o PR
@@ -48,4 +54,4 @@ Entrada → Spec writer → Builder → [Seguridad | UX | UI | Código] → Appr
 - Al cerrar, invoca `gestor-documentacion` con los archivos modificados.
 
 ## Reporte final
-Tabla con el estado de cada fase (completada, fallida, omitida y por qué), veredictos de los 4 revisores, decisión, destino (PR/Main), enlaces a los artefactos y siguientes pasos.
+Tabla con el estado de cada fase, el resultado del quality gate fila por fila (completada, fallida, omitida y por qué), veredictos de los 4 revisores, decisión, destino (PR/Main), enlaces a los artefactos y siguientes pasos.

@@ -210,3 +210,11 @@ curl -X POST http://localhost:8000/feature \
 - ❌ Don't use sync functions in async context
 - ❌ Don't hardcode values that should be config
 - ❌ Don't catch all exceptions - be specific
+
+## Baseline de calidad y seguridad (obligatorio)
+Ver `.claude/prompts/estandar-calidad.md`.
+- **Herramientas**: [linter, tipado, framework de tests, auditoría de dependencias del stack]
+- **Dependencias nuevas**: [paquete@versión fija: justificación; confirmar que existe y es el oficial]
+- **Amenazas relevantes** (OWASP): [control de acceso, inyección, validación de entradas, secretos...] y cómo se mitigan
+- **CI**: `.github/workflows/quality.yml` desde `.claude/templates/ci-quality.yml`
+- **Gate esperado**: `bash .claude/scripts/quality-gate.sh . --out factory/[feature]/quality-gate.md` en PASS

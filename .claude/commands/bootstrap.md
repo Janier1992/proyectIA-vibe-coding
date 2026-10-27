@@ -69,4 +69,9 @@ package.json
    - Inyectar las variables CSS HSL de la skill `ui-ux-aesthetics` en los archivos de estilos del proyecto.
 4. **Instalar Dependencias Básicas**: Proponer o ejecutar los comandos de instalación correspondientes (ej: `npm install` o creación de entorno virtual de Python).
 5. **Configurar Entorno**: Crear archivo `.env.example` con las credenciales de base de datos requeridas (Supabase/InsForge).
-6. **Reportar Éxito**: Mostrar el árbol del proyecto inicializado y los comandos para arrancar el servidor de desarrollo.
+6. **Baseline de Calidad** (según `.claude/prompts/estandar-calidad.md`):
+   - Configurar linter, tipado estático y framework de tests con los scripts `lint`, `typecheck` y `test` (Node) o `ruff`, `mypy` y `pytest` (Python).
+   - Versionar el lockfile y asegurar que `.env` esté en `.gitignore`.
+   - Copiar `.claude/templates/ci-quality.yml` a `.github/workflows/quality.yml`.
+   - Ejecutar `bash .claude/scripts/quality-gate.sh .` y dejarlo en `PASS`.
+7. **Reportar Éxito**: Mostrar el árbol del proyecto inicializado y los comandos para arrancar el servidor de desarrollo.
